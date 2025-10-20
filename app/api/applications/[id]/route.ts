@@ -3,12 +3,50 @@ import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import Application from '@/lib/models/Application'
 import Job from '@/lib/models/Job'
-import { revalidatePath } from 'next/cache'
 
-// PATCH /api/applications/[id] - Update application status
+// GET /api/applications/[id] - Get a specific application
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { userId } = await auth()
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    await connectDB()
+
+    // Find the application and populate job details
+    const application = await Application.findById(id)
+      .populate('jobId', 'title companyName location remote jobType category salary postedAt')
+
+    if (!application) {
+      return NextResponse.json({ error: 'Application not found' }, { status: 404 })
+    }
+
+    // Check if the application belongs to the current user
+    if (application.candidateId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    return NextResponse.json({ application })
+  } catch (error) {
+    console.error('Error fetching application:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH /api/applications/[id] - Update application status (for employers)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const { userId } = await auth()
@@ -21,68 +59,44 @@ export async function PATCH(
     const body = await request.json()
     const { status } = body
 
-    if (!status) {
-      return NextResponse.json({ error: 'Status is required' }, { status: 400 })
-    }
-
     await connectDB()
 
     // Find the application
-    const application = await Application.findById(id)
-      .populate('jobId', '_id companyId title')
-
+    const application = await Application.findById(id).populate('jobId')
+    
     if (!application) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 })
     }
 
-    // Check if the user is the job owner
-    const job = application.jobId as any
-    if (job.companyId !== userId) {
-      return NextResponse.json({ error: 'Unauthorized to update this application' }, { status: 403 })
+    // Check if the current user is the job owner
+    if (application.jobId.companyId !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
-    // Track previous status to adjust job counters
-    const previousStatus = application.status
-
-    // Update the application status
+    // Update application status
     application.status = status
+    application.reviewedAt = new Date()
+    
+    if (status === 'shortlisted') {
+      application.shortlistedAt = new Date()
+    }
+
     await application.save()
 
-    // Update Job shortlistedApplications counter if needed
-    try {
-      const isPrevShortlisted = previousStatus === 'shortlisted'
-      const isNowShortlisted = status === 'shortlisted'
-      if (isPrevShortlisted !== isNowShortlisted) {
-        const inc = isNowShortlisted ? 1 : -1
-        const populated = application.jobId as any
-        const jobObjectId = populated?._id || application.jobId
-        if (jobObjectId) {
-          await Job.updateOne({ _id: jobObjectId }, { $inc: { shortlistedApplications: inc } })
-        }
+    // Update job shortlisted applications count
+    const job = await Job.findById(application.jobId._id)
+    if (job) {
+      if (status === 'shortlisted' && application.status !== 'shortlisted') {
+        job.shortlistedApplications = (job.shortlistedApplications || 0) + 1
+      } else if (application.status === 'shortlisted' && status !== 'shortlisted') {
+        job.shortlistedApplications = Math.max((job.shortlistedApplications || 0) - 1, 0)
       }
-    } catch (counterErr) {
-      console.error('Failed updating job shortlistedApplications counter:', counterErr)
+      await job.save()
     }
 
-    // Revalidate dashboards
-    try {
-      revalidatePath('/employer/dashboard')
-      revalidatePath('/candidate/dashboard')
-    } catch (revErr) {
-      console.warn('Revalidate dashboards warning:', revErr)
-    }
-
-    return NextResponse.json({ 
-      message: 'Application status updated successfully',
-      application: {
-        _id: application._id,
-        status: application.status,
-        submittedAt: application.submittedAt
-      }
-    })
-
+    return NextResponse.json({ application })
   } catch (error) {
-    console.error('Error updating application status:', error)
+    console.error('Error updating application:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

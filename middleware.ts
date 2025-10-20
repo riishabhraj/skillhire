@@ -131,24 +131,8 @@ async function getUserRoleFromRequest(req: Request, userId: string): Promise<'em
       }
     }
 
-    // Try to get user role from database via API call
-    try {
-      const baseUrl = new URL(req.url).origin
-      const response = await fetch(`${baseUrl}/api/users/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${userId}`, // Simple auth for internal calls
-        },
-      })
-      
-      if (response.ok) {
-        const userData = await response.json()
-        return userData.role || null
-      }
-    } catch (apiError) {
-      console.log('Could not fetch user role from API:', apiError)
-    }
-
-    // If we can't determine the role, return null to force onboarding
+    // For now, return null to force proper role detection on client side
+    // The client-side useRoleDetection hook will handle fetching from database
     return null
   } catch (error) {
     console.error('Error getting user role:', error)

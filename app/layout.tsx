@@ -4,6 +4,7 @@ import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ClerkProvider } from "@clerk/nextjs"
 import RoleBasedNav from "@/components/role-based-nav"
+import Footer from "@/components/footer"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -36,9 +37,6 @@ export default function RootLayout({
                 <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Features
                 </a>
-                <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Pricing
-                </a>
                 <a href="/remote-jobs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Remote Jobs
                 </a>
@@ -49,7 +47,10 @@ export default function RootLayout({
               <RoleBasedNav />
             </div>
           </header>
-          {children}
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <Footer />
         </ClerkProvider>
         <Analytics />
       </body>

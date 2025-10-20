@@ -17,35 +17,35 @@ export function useRoleDetection() {
       return
     }
 
-    // Check localStorage for role intent (with backward compatibility)
-    const roleIntent = localStorage.getItem('userRoleIntent') || localStorage.getItem('userRole')
-    
-    if (roleIntent === 'employer' || roleIntent === 'candidate') {
-      setRole(roleIntent)
-      setIsDetecting(false)
-      return
+    // Fetch user role from database via API
+    const fetchUserRole = async () => {
+      try {
+        const response = await fetch(`/api/users/${user?.id}`)
+        if (response.ok) {
+          const userData = await response.json()
+          setRole(userData.role)
+        } else {
+          // If user not found in database, redirect to onboarding
+          setRole(null)
+        }
+      } catch (error) {
+        console.error('Error fetching user role:', error)
+        setRole(null)
+      } finally {
+        setIsDetecting(false)
+      }
     }
 
-    // Check if user has role in their metadata
-    if (user?.publicMetadata?.role) {
-      setRole(user.publicMetadata.role as 'employer' | 'candidate')
-      setIsDetecting(false)
-      return
-    }
-
-    // If no role found, set to null
-    setRole(null)
-    setIsDetecting(false)
+    fetchUserRole()
   }, [isLoaded, isSignedIn, user])
 
   const setUserRole = (newRole: 'employer' | 'candidate') => {
     setRole(newRole)
-    localStorage.setItem('userRoleIntent', newRole)
+    // Don't store in localStorage for security
   }
 
   const clearRole = () => {
     setRole(null)
-    localStorage.removeItem('userRoleIntent')
   }
 
   return {

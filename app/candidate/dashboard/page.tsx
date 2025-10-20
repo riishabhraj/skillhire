@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Briefcase, Clock, CheckCircle, XCircle, Eye, TrendingUp, Plus } from "lucide-react"
+import RoleGuard from "@/components/role-guard"
 
 interface Application {
   _id: string
@@ -164,7 +165,8 @@ export default function CandidateDashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <RoleGuard allowedRoles={['candidate']}>
+      <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -401,6 +403,7 @@ export default function CandidateDashboardPage() {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

@@ -22,14 +22,14 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="/sign-up/unified?role=employer"
+                href="/sign-up/employer"
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
               >
                 Hire Talent
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/sign-up/unified?role=candidate"
+                href="/sign-in/candidate"
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-3 text-base font-semibold text-foreground transition-all hover:bg-muted"
               >
                 Find Jobs
@@ -39,23 +39,23 @@ export default function HomePage() {
             <div className="mt-8 flex items-center justify-center gap-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                No credit card required
+                Project-based evaluation
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                Setup in 5 minutes
+                Real skills assessment
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-green-500" />
-                Free forever plan
+                Fair hiring process
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 bg-muted/30">
+      {/* Stats Section - Commented out until we have real data */}
+      {/* <section className="py-16 bg-muted/30">
         <div className="mx-auto max-w-7xl px-4">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="text-center">
@@ -76,7 +76,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Features Section */}
       <section id="features" className="py-20">
@@ -105,7 +105,7 @@ export default function HomePage() {
               </div>
               <h3 className="mb-3 text-xl font-semibold">Faster Interviews</h3>
               <p className="text-muted-foreground">
-                Reduce interview time by 70%. Focus on the best candidates who've already proven their skills.
+                Focus on the best candidates who've already proven their skills through project-based evaluation.
               </p>
             </div>
             <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
@@ -137,9 +137,9 @@ export default function HomePage() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold">
                 1
               </div>
-              <h3 className="mb-3 text-xl font-semibold">Create Your Project</h3>
+              <h3 className="mb-3 text-xl font-semibold">Post Your Job</h3>
               <p className="text-muted-foreground">
-                Design a project that reflects the actual work. Choose from our templates or create custom challenges.
+                Post your job requirements and let candidates showcase their skills through project-based applications.
               </p>
             </div>
             <div className="text-center">
@@ -148,7 +148,7 @@ export default function HomePage() {
               </div>
               <h3 className="mb-3 text-xl font-semibold">Candidates Apply</h3>
               <p className="text-muted-foreground">
-                Share your project link. Candidates complete the challenge and submit their work for review.
+                Candidates find your job and apply with their project portfolio, showcasing their real skills and experience.
               </p>
             </div>
             <div className="text-center">
@@ -164,8 +164,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20">
+      {/* Testimonials Section - Commented out until we have real customer reviews */}
+      {/* <section className="py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -232,10 +232,10 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-muted/30">
+      {/* Pricing Section - Moved to employer sign-up/sign-in pages only */}
+      {/* <section id="pricing" className="py-20 bg-muted/30">
         <div className="mx-auto max-w-7xl px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -269,7 +269,7 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <Link
-                  href="/sign-up/unified?role=employer"
+                  href="/sign-up/employer"
                   className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted"
                 >
                   Get Started
@@ -308,7 +308,7 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <Link
-                  href="/sign-up/unified?role=employer"
+                  href="/sign-up/employer"
                   className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   Start Free Trial
@@ -350,7 +350,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* About Section */}
       <section id="about" className="py-20">
@@ -379,25 +379,11 @@ export default function HomePage() {
             </div>
             <div>
               <h3 className="text-xl font-semibold mb-4">Our Mission</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-muted-foreground">
                 To revolutionize hiring by focusing on what really matters: the ability to do the job. 
                 We're creating a world where talent is recognized regardless of background, where 
                 skills speak louder than resumes.
               </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                  <span className="text-sm text-muted-foreground">10,000+ candidates evaluated</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                  <span className="text-sm text-muted-foreground">500+ companies trust us</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="h-2 w-2 rounded-full bg-primary"></div>
-                  <span className="text-sm text-muted-foreground">85% faster hiring process</span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -409,19 +395,19 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold tracking-tight text-primary-foreground sm:text-4xl">
             Ready to revolutionize your hiring?
           </h2>
-          <p className="mt-4 text-lg text-primary-foreground/80">
+          {/* <p className="mt-4 text-lg text-primary-foreground/80">
             Join 500+ companies already using SkillHire to find better talent faster.
-          </p>
+          </p> */}
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
-              href="/sign-up/unified?role=employer"
+              href="/sign-up/employer"
               className="inline-flex items-center gap-2 rounded-lg bg-background px-6 py-3 text-base font-semibold text-foreground shadow-lg transition-all hover:bg-background/90"
             >
               Start Hiring
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/sign-up/unified?role=candidate"
+              href="/sign-in/candidate"
               className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-transparent px-6 py-3 text-base font-semibold text-primary-foreground transition-all hover:bg-primary-foreground/10"
             >
               Find Opportunities
@@ -430,45 +416,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-background border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 py-12">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-            <div className="lg:col-span-2">
-              <div className="mb-4 text-2xl font-bold text-foreground">SkillHire</div>
-              <p className="mb-4 max-w-md text-muted-foreground">
-                The future of hiring is project-based. Evaluate real skills, not just resumes.
-              </p>
-              <div className="flex gap-4">
-                <Link href="#" className="text-muted-foreground hover:text-foreground">Twitter</Link>
-                <Link href="#" className="text-muted-foreground hover:text-foreground">LinkedIn</Link>
-                <Link href="#" className="text-muted-foreground hover:text-foreground">GitHub</Link>
-              </div>
-            </div>
-            <div>
-              <h3 className="mb-4 font-semibold text-foreground">Product</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">Features</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Pricing</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Templates</Link></li>
-                <li><Link href="#" className="hover:text-foreground">API</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-4 font-semibold text-foreground">Company</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li><Link href="#" className="hover:text-foreground">About</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Blog</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Careers</Link></li>
-                <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 SkillHire. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }

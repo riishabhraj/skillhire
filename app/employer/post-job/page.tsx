@@ -11,18 +11,22 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Plus, X, Briefcase, MapPin, DollarSign, Clock, Target } from "lucide-react"
+import { Loader2, Plus, X, Briefcase, MapPin, DollarSign, Clock, Target, CreditCard } from "lucide-react"
+import PaymentButton from "@/components/payment-button"
 
 export default function PostJobPage() {
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [createdJobId, setCreatedJobId] = useState<string | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium'>('basic')
   const { userData, isLoaded } = useUserData()
   const router = useRouter()
 
   // Job form data
   const [jobData, setJobData] = useState({
     title: "",
+    companyName: "",
     description: "",
     requirements: [] as string[],
     preferredSkills: [] as string[],
@@ -68,10 +72,27 @@ export default function PostJobPage() {
     { id: 0, title: "Job Details", icon: Briefcase },
     { id: 1, title: "Requirements", icon: Target },
     { id: 2, title: "Project Criteria", icon: Target },
-    { id: 3, title: "Review & Post", icon: Clock }
+    { id: 3, title: "Review", icon: Clock },
+    { id: 4, title: "Payment", icon: CreditCard }
   ]
 
   const handleNext = () => {
+    // Validate current step before proceeding
+    if (step === 0) {
+      if (!jobData.title.trim()) {
+        setError('Job title is required')
+        return
+      }
+      if (!jobData.companyName.trim()) {
+        setError('Company name is required')
+        return
+      }
+      if (!jobData.category) {
+        setError('Category is required')
+        return
+      }
+    }
+    
     if (step < steps.length - 1) {
       setStep(step + 1)
     }
@@ -158,22 +179,32 @@ export default function PostJobPage() {
         body: JSON.stringify({
           ...jobData,
           companyId: userData.id,
-          companyName: userData.firstName + ' ' + userData.lastName
+          planType: selectedPlan,
+          paymentStatus: 'pending'
         })
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to post job')
+        throw new Error(errorData.error || 'Failed to create job')
       }
 
       const result = await response.json()
-      router.push('/employer/dashboard')
+      setCreatedJobId(result.job._id)
+      setStep(4) // Move to payment step
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
+  }
+
+  const handlePaymentSuccess = () => {
+    router.push('/employer/dashboard?payment=success')
+  }
+
+  const handlePaymentError = (error: string) => {
+    setError(error)
   }
 
   if (!isLoaded) {
@@ -242,6 +273,18 @@ export default function PostJobPage() {
                   />
                 </div>
                 
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name *</Label>
+                  <Input
+                    id="companyName"
+                    placeholder="e.g., Acme Inc."
+                    value={jobData.companyName}
+                    onChange={(e) => setJobData(prev => ({ ...prev, companyName: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="category">Category *</Label>
                   <Select value={jobData.category} onValueChange={(value) => setJobData(prev => ({ ...prev, category: value }))}>
@@ -651,7 +694,8 @@ export default function PostJobPage() {
               <div className="space-y-4">
                 <div className="p-4 border rounded-lg">
                   <h3 className="font-semibold text-lg">{jobData.title}</h3>
-                  <p className="text-muted-foreground">{jobData.category}</p>
+                  <p className="text-muted-foreground">{jobData.companyName}</p>
+                  <p className="text-sm text-muted-foreground">{jobData.category}</p>
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
@@ -724,6 +768,111 @@ export default function PostJobPage() {
               </div>
             </div>
           )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-2">Choose Your Plan</h4>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Select a plan to publish your job posting.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Basic Plan */}
+                <div 
+                  className={`rounded-xl border p-6 cursor-pointer transition-all ${
+                    selectedPlan === 'basic' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedPlan('basic')}
+                >
+                  <div className="text-center">
+                    <h5 className="text-lg font-semibold text-foreground mb-2">Basic</h5>
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-foreground">$99</span>
+                      <span className="text-muted-foreground">/job</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Job posting & management
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Project-based evaluation
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Candidate analytics
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Email support
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Premium Plan */}
+                <div 
+                  className={`rounded-xl border p-6 cursor-pointer transition-all relative ${
+                    selectedPlan === 'premium' 
+                      ? 'border-primary bg-primary/5' 
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => setSelectedPlan('premium')}
+                >
+                  <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                      Most Popular
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <h5 className="text-lg font-semibold text-foreground mb-2">Premium</h5>
+                    <div className="mb-4">
+                      <span className="text-3xl font-bold text-foreground">$128</span>
+                      <span className="text-muted-foreground">/job</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Everything in Basic
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Company logo display
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Priority candidate matching
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Advanced analytics
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                        Priority support
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {createdJobId && (
+                <div className="mt-6">
+                  <PaymentButton
+                    planType={selectedPlan}
+                    jobId={createdJobId}
+                    onSuccess={handlePaymentSuccess}
+                    onError={handlePaymentError}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -738,15 +887,19 @@ export default function PostJobPage() {
         </Button>
         
         <div className="flex items-center gap-2">
-          {step < steps.length - 1 ? (
+          {step < 3 ? (
             <Button onClick={handleNext}>
               Next
             </Button>
-          ) : (
+          ) : step === 3 ? (
             <Button onClick={handleSubmit} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Post Job
+              Create Job
             </Button>
+          ) : (
+            <div className="text-sm text-muted-foreground">
+              Complete payment to publish your job
+            </div>
           )}
         </div>
       </div>

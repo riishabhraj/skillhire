@@ -47,6 +47,12 @@ export interface IJob extends Document {
   careerSiteUrl?: string // URL to company's career site
   useCareerSite: boolean // Whether to redirect to career site or use platform
   
+  // Payment fields
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
+  planType: 'basic' | 'premium'
+  stripeSessionId?: string
+  paidAt?: Date
+  
   status: 'active' | 'paused' | 'closed'
   postedAt: Date
   expiresAt?: Date
@@ -159,6 +165,20 @@ const JobSchema = new Schema<IJob>({
     type: Boolean,
     default: false
   },
+  
+  // Payment fields
+  paymentStatus: {
+    type: String,
+    enum: ['pending', 'paid', 'failed', 'refunded'],
+    default: 'pending'
+  },
+  planType: {
+    type: String,
+    enum: ['basic', 'premium'],
+    required: true
+  },
+  stripeSessionId: String,
+  paidAt: Date,
   
   status: {
     type: String,

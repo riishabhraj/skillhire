@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Briefcase, Users, TrendingUp, Plus, Eye, BarChart3, Settings, Clock, DollarSign, MapPin } from "lucide-react"
+import RoleGuard from "@/components/role-guard"
 
 interface Job {
   _id: string
@@ -106,7 +107,8 @@ export default function EmployerDashboardPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <RoleGuard allowedRoles={['employer']}>
+      <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
@@ -296,6 +298,7 @@ export default function EmployerDashboardPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </RoleGuard>
   )
 }

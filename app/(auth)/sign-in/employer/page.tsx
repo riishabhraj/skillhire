@@ -63,11 +63,85 @@ export default function EmployerSignInPage() {
             </div>
           </div>
 
-          <div className="rounded-lg border border-border bg-muted/30 p-6">
-            <h4 className="font-semibold text-foreground mb-2">Your Dashboard Awaits</h4>
-            <p className="text-sm text-muted-foreground">
-              Access your job postings, review applicants, and manage your hiring pipeline all in one place.
-            </p>
+          <div className="space-y-6">
+            <h4 className="text-xl font-semibold text-foreground text-center">Choose Your Plan</h4>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Basic Plan */}
+              <div className="rounded-xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
+                <div className="text-center">
+                  <h5 className="text-lg font-semibold text-foreground mb-2">Basic</h5>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-foreground">$99</span>
+                    <span className="text-muted-foreground">/job</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Job posting & management
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Project-based evaluation
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Candidate analytics
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Email support
+                    </li>
+                  </ul>
+                  <div className="text-xs text-muted-foreground">
+                    Perfect for single job postings
+                  </div>
+                </div>
+              </div>
+
+              {/* Premium Plan */}
+              <div className="rounded-xl border border-primary bg-card p-6 shadow-sm hover:shadow-md transition-shadow relative">
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2">
+                  <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                    Most Popular
+                  </span>
+                </div>
+                <div className="text-center">
+                  <h5 className="text-lg font-semibold text-foreground mb-2">Premium</h5>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-foreground">$128</span>
+                    <span className="text-muted-foreground">/job</span>
+                  </div>
+                  <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Everything in Basic
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Company logo display
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Priority candidate matching
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Advanced analytics
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary"></div>
+                      Priority support
+                    </li>
+                  </ul>
+                  <div className="text-xs text-muted-foreground">
+                    Best for professional hiring
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="text-center text-sm text-muted-foreground">
+              No monthly fees • Pay only for what you use • Cancel anytime
+            </div>
           </div>
         </div>
 
@@ -79,6 +153,11 @@ export default function EmployerSignInPage() {
               <p className="text-sm text-muted-foreground mt-2">
                 Access your employer dashboard and continue hiring.
               </p>
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> Please use your company email address to sign in as an employer.
+                </p>
+              </div>
             </div>
 
             <SignIn
@@ -86,7 +165,7 @@ export default function EmployerSignInPage() {
                 elements: {
                   card: "bg-card text-card-foreground border border-border",
                   headerSubtitle: "text-muted-foreground",
-                  socialButtonsBlockButton: "border border-border hover:bg-muted",
+                  socialButtonsBlockButton: "hidden", // Hide social login buttons
                   formButtonPrimary: "bg-primary hover:bg-primary/90 text-primary-foreground",
                   footerActionLink: "text-primary hover:text-primary/80",
                 },

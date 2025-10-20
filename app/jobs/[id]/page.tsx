@@ -152,7 +152,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
                 <Button asChild size="lg">
                   <Link href={`/candidate/apply/${job._id}`}>
                     Apply Now
-                  </Link>
+          </Link>
                 </Button>
               )
             )}
@@ -277,9 +277,9 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
                     <li key={`${job._id}-benefit-${index}`} className="flex items-start gap-2">
                       <Star className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                       <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
+              </li>
+            ))}
+          </ul>
               </CardContent>
             </Card>
           )}
@@ -424,7 +424,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
               <Button asChild size="lg" className="w-full">
                 <Link href={`/candidate/apply/${job._id}`}>
                   Apply Now
-                </Link>
+          </Link>
               </Button>
             )
           ) : (
@@ -432,7 +432,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
               <Button asChild size="lg" className="w-full">
                 <Link href="/sign-in/candidate">
                   Sign In to Apply
-                </Link>
+          </Link>
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 You need to be signed in to apply for this job
@@ -440,7 +440,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
   )
 }
