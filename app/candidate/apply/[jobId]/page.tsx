@@ -51,6 +51,7 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [newSkill, setNewSkill] = useState("")
   const { userData, isLoaded } = useUserData()
   const router = useRouter()
 
@@ -194,9 +195,45 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
     }))
   }
 
+  const addSkill = () => {
+    if (newSkill.trim()) {
+      setApplicationData(prev => ({
+        ...prev,
+        skills: {
+          ...prev.skills,
+          technical: [
+            ...prev.skills.technical,
+            {
+              name: newSkill.trim(),
+              level: 'intermediate' as const,
+              yearsOfExperience: 1,
+              projects: []
+            }
+          ]
+        }
+      }))
+      setNewSkill("")
+    }
+  }
+
+  const removeSkill = (index: number) => {
+    setApplicationData(prev => ({
+      ...prev,
+      skills: {
+        ...prev.skills,
+        technical: prev.skills.technical.filter((_, i) => i !== index)
+      }
+    }))
+  }
+
   const handleSubmit = async () => {
     if (!userData || !job) {
       setError('User data or job not available')
+      return
+    }
+
+    if (!applicationData.coverLetter.trim()) {
+      setError('Please write a cover letter')
       return
     }
 
@@ -218,10 +255,6 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
         experience: applicationData.experience
       }
       
-      console.log('Submitting application with data:', requestData)
-      console.log('Job ID:', job._id)
-      console.log('Cover letter length:', applicationData.coverLetter.length)
-      console.log('Projects count:', applicationData.projects.length)
       
       const response = await fetch('/api/applications', {
         method: 'POST',
@@ -380,6 +413,43 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
               value={applicationData.coverLetter}
               onChange={(e) => setApplicationData(prev => ({ ...prev, coverLetter: e.target.value }))}
             />
+          </div>
+
+          {/* Skills Section */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Technical Skills</h4>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add a technical skill (e.g., React, Python, AWS)"
+                  value={newSkill}
+                  onChange={(e) => setNewSkill(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      addSkill()
+                    }
+                  }}
+                />
+                <Button type="button" onClick={addSkill} disabled={!newSkill.trim()}>
+                  Add
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {applicationData.skills.technical.map((skill, index) => (
+                  <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                    {skill.name}
+                    <button
+                      type="button"
+                      onClick={() => removeSkill(index)}
+                      className="ml-1 hover:text-destructive"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Project Portfolio */}

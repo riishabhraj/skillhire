@@ -56,37 +56,18 @@ export interface IApplication extends Document {
   
   // Evaluation results
   evaluation: {
-    projectScores: {
-      projectId: string
-      technicalScore: number // 0-100
-      complexityScore: number // 0-100
-      innovationScore: number // 0-100
-      qualityScore: number // 0-100
-      relevanceScore: number // 0-100
-      overallProjectScore: number // 0-100
-      feedback: string
-    }[]
-    skillsMatch: {
-      requiredSkills: {
-        skill: string
-        required: boolean
-        candidateLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert'
-        matchScore: number // 0-100
-      }[]
-      overallSkillsScore: number // 0-100
-    }
-    experienceMatch: {
-      yearsMatch: number // 0-100
-      levelMatch: number // 0-100
-      relevanceMatch: number // 0-100
-      overallExperienceScore: number // 0-100
-    }
     overallScore: number // 0-100
-    shortlistStatus: 'pending' | 'shortlisted' | 'rejected' | 'under_review'
-    shortlistReason: string
-    strengths: string[]
-    areasForImprovement: string[]
-    recommendedFor: string[] // Job types/roles this candidate is good for
+    projectScore: number // 0-100
+    experienceScore: number // 0-100
+    skillsScore: number // 0-100
+    shortlistStatus: 'shortlisted' | 'under_review' | 'rejected'
+    feedback: string
+    detailedFeedback?: {
+      projectFeedback: string
+      experienceFeedback: string
+      skillsFeedback: string
+      recommendations: string[]
+    }
   }
   
   // Greenhouse integration
@@ -181,96 +162,38 @@ const ApplicationSchema = new Schema<IApplication>({
   
   // Evaluation results
   evaluation: {
-    projectScores: [{
-      projectId: String,
-      technicalScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      complexityScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      innovationScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      qualityScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      relevanceScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      overallProjectScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      feedback: String
-    }],
-    skillsMatch: {
-      requiredSkills: [{
-        skill: String,
-        required: Boolean,
-        candidateLevel: {
-          type: String,
-          enum: ['beginner', 'intermediate', 'advanced', 'expert']
-        },
-        matchScore: {
-          type: Number,
-          min: 0,
-          max: 100
-        }
-      }],
-      overallSkillsScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      }
-    },
-    experienceMatch: {
-      yearsMatch: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      levelMatch: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      relevanceMatch: {
-        type: Number,
-        min: 0,
-        max: 100
-      },
-      overallExperienceScore: {
-        type: Number,
-        min: 0,
-        max: 100
-      }
-    },
     overallScore: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    projectScore: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    experienceScore: {
+      type: Number,
+      min: 0,
+      max: 100
+    },
+    skillsScore: {
       type: Number,
       min: 0,
       max: 100
     },
     shortlistStatus: {
       type: String,
-      enum: ['pending', 'shortlisted', 'rejected', 'under_review'],
-      default: 'pending'
+      enum: ['shortlisted', 'under_review', 'rejected'],
+      default: 'under_review'
     },
-    shortlistReason: String,
-    strengths: [String],
-    areasForImprovement: [String],
-    recommendedFor: [String]
+    feedback: String,
+    detailedFeedback: {
+      projectFeedback: String,
+      experienceFeedback: String,
+      skillsFeedback: String,
+      recommendations: [String]
+    }
   },
   
   // Greenhouse integration
@@ -298,7 +221,6 @@ ApplicationSchema.index({ candidateId: 1 })
 ApplicationSchema.index({ jobId: 1 })
 ApplicationSchema.index({ 'evaluation.overallScore': -1 })
 ApplicationSchema.index({ 'evaluation.shortlistStatus': 1 })
-ApplicationSchema.index({ greenhouseCandidateId: 1 })
 ApplicationSchema.index({ status: 1 })
 
 export default mongoose.models.Application || mongoose.model<IApplication>('Application', ApplicationSchema)

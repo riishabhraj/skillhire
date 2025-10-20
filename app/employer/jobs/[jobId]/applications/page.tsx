@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useUserData } from "@/hooks/use-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -68,25 +69,28 @@ interface Application {
   }
 }
 
-export default function JobApplicationsPage({ params }: { params: { jobId: string } }) {
+export default function JobApplicationsPage() {
   const [job, setJob] = useState<Job | null>(null)
   const [applications, setApplications] = useState<Application[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const { userData, isLoaded } = useUserData()
+  const params = useParams<{ jobId: string }>()
+  const jobId = (params?.jobId as string) || ""
 
   useEffect(() => {
-    if (isLoaded && userData) {
+    if (isLoaded && userData && jobId) {
       fetchData()
     }
-  }, [isLoaded, userData, params.jobId])
+  }, [isLoaded, userData, jobId])
 
   const fetchData = async () => {
     try {
       setLoading(true)
       
       // Fetch job details
-      const jobResponse = await fetch(`/api/jobs/${params.jobId}`)
+      const jobResponse = await fetch(`/api/jobs/${jobId}`)
       if (!jobResponse.ok) {
         throw new Error('Job not found')
       }
@@ -94,7 +98,7 @@ export default function JobApplicationsPage({ params }: { params: { jobId: strin
       setJob(jobData)
 
       // Fetch applications for this job
-      const applicationsResponse = await fetch(`/api/employer/jobs/${params.jobId}/applications`)
+      const applicationsResponse = await fetch(`/api/employer/jobs/${jobId}/applications`)
       if (!applicationsResponse.ok) {
         throw new Error('Failed to fetch applications')
       }
@@ -104,6 +108,35 @@ export default function JobApplicationsPage({ params }: { params: { jobId: strin
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleViewProfile = (candidateId: string) => {
+    // Open a placeholder view for now; integrate a dedicated profile page later
+    window.open(`/employer/candidates?candidateId=${candidateId}`, '_blank')
+  }
+
+  const updateApplicationStatus = async (applicationId: string, status: 'shortlisted' | 'rejected') => {
+    try {
+      setActionLoading(applicationId)
+      const response = await fetch(`/api/applications/${applicationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to update application')
+      }
+
+      // Optimistically update local state
+      setApplications(prev => prev.map(app => app._id === applicationId ? { ...app, status } : app))
+    } catch (e) {
+      console.error('Failed to update application', e)
+      alert(e instanceof Error ? e.message : 'Failed to update application')
+    } finally {
+      setActionLoading(null)
     }
   }
 
@@ -338,14 +371,32 @@ export default function JobApplicationsPage({ params }: { params: { jobId: strin
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-4 border-t">
-                  <Button size="sm">
+                  <Button size="sm" onClick={() => handleViewProfile(application.candidateId)}>
                     View Full Profile
                   </Button>
-                  <Button size="sm" variant="outline">
-                    Shortlist
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => updateApplicationStatus(application._id, 'shortlisted')}
+                    disabled={actionLoading === application._id || application.status === 'shortlisted'}
+                  >
+                    {actionLoading === application._id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Shortlist'
+                    )}
                   </Button>
-                  <Button size="sm" variant="outline">
-                    Reject
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => updateApplicationStatus(application._id, 'rejected')}
+                    disabled={actionLoading === application._id || application.status === 'rejected'}
+                  >
+                    {actionLoading === application._id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      'Reject'
+                    )}
                   </Button>
                 </div>
               </CardContent>

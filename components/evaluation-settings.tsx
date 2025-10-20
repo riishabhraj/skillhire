@@ -32,7 +32,6 @@ export function EvaluationSettings() {
   const [settings, setSettings] = useState<EvaluationSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [githubTestResult, setGithubTestResult] = useState<boolean | null>(null)
@@ -86,40 +85,7 @@ export function EvaluationSettings() {
     }
   }
 
-  const testGitHubConnection = async () => {
-    if (!settings?.githubIntegration?.token) {
-      setError('Please enter a GitHub token first')
-      return
-    }
-
-    try {
-      setTesting(true)
-      setError(null)
-
-      const response = await fetch('/api/settings/test-github', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: settings.githubIntegration.token })
-      })
-
-      const data = await response.json()
-      
-      if (response.ok) {
-        setGithubTestResult(true)
-        setSuccess('GitHub connection successful!')
-      } else {
-        setGithubTestResult(false)
-        setError(data.error || 'GitHub connection failed')
-      }
-    } catch (err) {
-      setGithubTestResult(false)
-      setError(err instanceof Error ? err.message : 'Failed to test GitHub connection')
-    } finally {
-      setTesting(false)
-    }
-  }
+  // Token testing removed: we rely on global server-side GITHUB_TOKEN
 
   const updateWeight = (type: 'project' | 'experience' | 'skills', value: number) => {
     if (!settings) return
@@ -291,7 +257,7 @@ export function EvaluationSettings() {
                 Enable GitHub Project Analysis
               </Label>
               <p className="text-xs text-muted-foreground">
-                Analyze actual GitHub repositories for better evaluation
+                Analyze actual GitHub repositories for better evaluation. Uses the organization-wide token configured in the server environment.
               </p>
             </div>
             <Switch
@@ -306,41 +272,11 @@ export function EvaluationSettings() {
 
           {settings.githubIntegration.enabled && (
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="github-token" className="text-sm font-medium">
-                  GitHub Personal Access Token
-                </Label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    id="github-token"
-                    type="password"
-                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-                    value={settings.githubIntegration.token || ''}
-                    onChange={(e) => setSettings(prev => prev ? {
-                      ...prev,
-                      githubIntegration: { ...prev.githubIntegration, token: e.target.value }
-                    } : null)}
-                  />
-                  <Button
-                    onClick={testGitHubConnection}
-                    disabled={testing || !settings.githubIntegration.token}
-                    variant="outline"
-                  >
-                    {testing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : githubTestResult === true ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : githubTestResult === false ? (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    ) : (
-                      "Test"
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Required for GitHub API access. Get your token from GitHub Settings → Developer settings → Personal access tokens
-                </p>
-              </div>
+              <Alert>
+                <AlertDescription>
+                  Using organization-wide GitHub token from server environment. No per-employer token required.
+                </AlertDescription>
+              </Alert>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

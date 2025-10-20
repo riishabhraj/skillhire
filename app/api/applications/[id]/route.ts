@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import Application from '@/lib/models/Application'
 import Job from '@/lib/models/Job'
+import { revalidatePath } from 'next/cache'
 
 // PATCH /api/applications/[id] - Update application status
 export async function PATCH(
@@ -28,7 +29,7 @@ export async function PATCH(
 
     // Find the application
     const application = await Application.findById(id)
-      .populate('jobId', 'companyId title')
+      .populate('jobId', '_id companyId title')
 
     if (!application) {
       return NextResponse.json({ error: 'Application not found' }, { status: 404 })
@@ -40,9 +41,36 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized to update this application' }, { status: 403 })
     }
 
+    // Track previous status to adjust job counters
+    const previousStatus = application.status
+
     // Update the application status
     application.status = status
     await application.save()
+
+    // Update Job shortlistedApplications counter if needed
+    try {
+      const isPrevShortlisted = previousStatus === 'shortlisted'
+      const isNowShortlisted = status === 'shortlisted'
+      if (isPrevShortlisted !== isNowShortlisted) {
+        const inc = isNowShortlisted ? 1 : -1
+        const populated = application.jobId as any
+        const jobObjectId = populated?._id || application.jobId
+        if (jobObjectId) {
+          await Job.updateOne({ _id: jobObjectId }, { $inc: { shortlistedApplications: inc } })
+        }
+      }
+    } catch (counterErr) {
+      console.error('Failed updating job shortlistedApplications counter:', counterErr)
+    }
+
+    // Revalidate dashboards
+    try {
+      revalidatePath('/employer/dashboard')
+      revalidatePath('/candidate/dashboard')
+    } catch (revErr) {
+      console.warn('Revalidate dashboards warning:', revErr)
+    }
 
     return NextResponse.json({ 
       message: 'Application status updated successfully',

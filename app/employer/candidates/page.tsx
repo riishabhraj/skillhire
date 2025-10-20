@@ -82,13 +82,17 @@ export default function CandidatesPage() {
   }
 
   const handleViewProfile = (candidateId: string) => {
-    // Navigate to candidate profile page
-    window.open(`/employer/candidates/${candidateId}`, '_blank')
+    console.log('Viewing profile for candidate:', candidateId)
+    // For now, show an alert since we don't have a profile page yet
+    alert(`Viewing profile for candidate: ${candidateId}`)
+    // TODO: Navigate to candidate profile page when created
+    // window.open(`/employer/candidates/${candidateId}`, '_blank')
   }
 
   const handleShortlist = async (applicationId: string, candidateId: string) => {
     try {
       setActionLoading(applicationId)
+      console.log('Shortlisting application:', applicationId, 'for candidate:', candidateId)
       
       const response = await fetch(`/api/applications/${applicationId}`, {
         method: 'PATCH',
@@ -99,7 +103,8 @@ export default function CandidatesPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to shortlist candidate')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to shortlist candidate')
       }
 
       // Update local state
@@ -115,9 +120,13 @@ export default function CandidatesPage() {
         return candidate
       }))
 
+      // Show success message
+      alert('Candidate shortlisted successfully!')
+
     } catch (err) {
       console.error('Error shortlisting candidate:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
+      alert(`Error: ${err instanceof Error ? err.message : 'An error occurred'}`)
     } finally {
       setActionLoading(null)
     }
@@ -126,6 +135,7 @@ export default function CandidatesPage() {
   const handleReject = async (applicationId: string, candidateId: string) => {
     try {
       setActionLoading(applicationId)
+      console.log('Rejecting application:', applicationId, 'for candidate:', candidateId)
       
       const response = await fetch(`/api/applications/${applicationId}`, {
         method: 'PATCH',
@@ -136,7 +146,8 @@ export default function CandidatesPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to reject candidate')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to reject candidate')
       }
 
       // Update local state
@@ -152,9 +163,13 @@ export default function CandidatesPage() {
         return candidate
       }))
 
+      // Show success message
+      alert('Candidate rejected successfully!')
+
     } catch (err) {
       console.error('Error rejecting candidate:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
+      alert(`Error: ${err instanceof Error ? err.message : 'An error occurred'}`)
     } finally {
       setActionLoading(null)
     }
@@ -218,6 +233,21 @@ export default function CandidatesPage() {
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+      )}
+
+      {/* Debug Information */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-4 bg-gray-100 rounded-lg">
+          <h3 className="font-semibold mb-2">Debug Info:</h3>
+          <p>Total candidates: {candidates.length}</p>
+          <p>Filtered candidates: {filteredCandidates.length}</p>
+          {candidates.length > 0 && (
+            <div>
+              <p>First candidate applications: {candidates[0]?.applications?.length || 0}</p>
+              <p>First candidate ID: {candidates[0]?._id}</p>
+            </div>
+          )}
+        </div>
       )}
 
       <div className="mb-6 space-y-4">
@@ -371,7 +401,7 @@ export default function CandidatesPage() {
                     >
                       View Profile
                     </Button>
-                    {latestApplication && (
+                    {latestApplication ? (
                       <>
                         <Button 
                           variant="outline"
@@ -396,6 +426,12 @@ export default function CandidatesPage() {
                           )}
                         </Button>
                       </>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button variant="outline" disabled>
+                          No Applications
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </CardContent>

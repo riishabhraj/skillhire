@@ -87,6 +87,7 @@ export default function EmployerOnboardingPage() {
           email: userData.email,
           role: 'employer',
           profile: profileData
+          
         })
       })
 

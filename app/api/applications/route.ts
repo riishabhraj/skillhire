@@ -5,6 +5,7 @@ import Application from '@/lib/models/Application'
 import Job from '@/lib/models/Job'
 import EvaluationSettings from '@/lib/models/EvaluationSettings'
 import { CandidateEvaluationService } from '@/lib/services/candidate-evaluation'
+import { HFEvaluatorService } from '@/lib/services/hf-evaluator'
 import { GitHubEnhancementService } from '@/lib/services/github-enhancement'
 
 // POST /api/applications - Create new application
@@ -19,21 +20,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { jobId, candidateId, coverLetter, projects, skills, experience } = body
 
-    console.log('API: Received application data:', {
-      jobId,
-      candidateId,
-      coverLetter: coverLetter ? `Length: ${coverLetter.length}` : 'Missing',
-      projects: projects ? `Count: ${projects.length}` : 'Missing',
-      skills: skills ? 'Present' : 'Missing',
-      experience: experience ? 'Present' : 'Missing'
-    })
 
     if (!jobId || !coverLetter || !projects || projects.length === 0) {
-      console.log('API: Validation failed:', {
-        jobId: !!jobId,
-        coverLetter: !!coverLetter,
-        projects: projects ? projects.length : 0
-      })
       return NextResponse.json(
         { error: 'Job ID, cover letter, and at least one project are required' },
         { status: 400 }
@@ -117,7 +105,7 @@ export async function POST(request: NextRequest) {
       }
 
       const evaluationService = new CandidateEvaluationService()
-      const evaluation = await evaluationService.evaluateCandidate(
+      let evaluation = await evaluationService.evaluateCandidate(
         enhancedApplication,
         job,
         {
@@ -128,6 +116,37 @@ export async function POST(request: NextRequest) {
           enableAIAnalysis: settings.enableAIAnalysis
         }
       )
+
+      // Optional: Blend with Hugging Face LLM scoring if configured
+      if (settings.enableAIAnalysis) {
+        try {
+          const hf = new HFEvaluatorService()
+          if (hf.isConfigured()) {
+            const hfScores = await hf.scoreApplication({
+              job,
+              candidate: enhancedApplication,
+              projects: (enhancedApplication as any).projects || []
+            })
+            if (hfScores) {
+              // Blend scores (70% rule, 30% LLM by default)
+              const alpha = 0.3
+              const blend = (a: number, b: number) => Math.round(a * (1 - alpha) + b * alpha)
+              evaluation.projectScore = blend(evaluation.projectScore, hfScores.projectScore)
+              evaluation.skillsScore = blend(evaluation.skillsScore, hfScores.skillsScore)
+              evaluation.experienceScore = blend(evaluation.experienceScore, hfScores.experienceScore)
+              evaluation.overallScore = blend(evaluation.overallScore, hfScores.overallScore)
+              // Re-evaluate shortlist status with blended score
+              evaluation.shortlistStatus = evaluation.overallScore >= Math.round(settings.minimumProjectScore) ? 'shortlisted' : evaluation.shortlistStatus
+              if (hfScores.feedback) {
+                evaluation.feedback = (evaluation.feedback ? evaluation.feedback + '\n' : '') + hfScores.feedback
+              }
+            }
+          }
+        } catch (hfError) {
+          // Continue with rule-based evaluation if HF fails
+          console.warn('Hugging Face evaluation failed, using rule-based only:', hfError)
+        }
+      }
 
       // Update application with evaluation results
       savedApplication.evaluation = evaluation
