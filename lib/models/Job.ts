@@ -50,7 +50,7 @@ export interface IJob extends Document {
   // Payment fields
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
   planType: 'basic' | 'premium'
-  stripeSessionId?: string
+  lemonSqueezyOrderId?: string
   paidAt?: Date
   
   status: 'active' | 'paused' | 'closed'
@@ -177,7 +177,7 @@ const JobSchema = new Schema<IJob>({
     enum: ['basic', 'premium'],
     required: true
   },
-  stripeSessionId: String,
+  lemonSqueezyOrderId: String,
   paidAt: Date,
   
   status: {

@@ -13,7 +13,9 @@ A modern, full-stack job matching platform that connects employers with skilled 
 
 ### For Employers
 - **Intelligent Candidate Evaluation** - Automatically score candidates based on projects and skills
+- **AI-Powered Screening** - Use Hugging Face LLMs for advanced candidate analysis
 - **GitHub Project Analysis** - Get insights into candidate's coding activity and project quality
+- **Flexible Payment Plans** - Pay per job posting with Basic ($99) or Premium ($128) plans
 - **Job Posting** - Create detailed job postings with custom evaluation criteria
 - **Candidate Management** - Shortlist, reject, and manage applications
 - **Analytics Dashboard** - Track hiring metrics and candidate performance
@@ -24,6 +26,8 @@ A modern, full-stack job matching platform that connects employers with skilled 
 - **Backend**: Next.js API Routes, Node.js
 - **Database**: MongoDB with Mongoose
 - **Authentication**: Clerk.js
+- **Payment Processing**: Lemon Squeezy
+- **AI Integration**: Hugging Face Inference API
 - **UI Components**: shadcn/ui
 - **External APIs**: GitHub API for project analysis
 - **Deployment**: Vercel (recommended)
@@ -34,7 +38,9 @@ A modern, full-stack job matching platform that connects employers with skilled 
 - pnpm (recommended) or npm
 - MongoDB database
 - Clerk account for authentication
-- GitHub account for API access
+- Lemon Squeezy account for payment processing
+- GitHub account for API access (optional)
+- Hugging Face account for AI evaluation (optional)
 
 ## 🚀 Getting Started
 
@@ -78,6 +84,18 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/onboarding
 # GitHub Integration (Optional)
 GITHUB_TOKEN=your_github_personal_access_token
 
+# Hugging Face AI Evaluation (Optional)
+HF_TOKEN=your_hugging_face_api_token
+HF_MODEL=meta-llama/Meta-Llama-3-70B-Instruct
+
+# Lemon Squeezy Payment Processing
+LEMONSQUEEZY_API_KEY=your_lemonsqueezy_api_key
+LEMONSQUEEZY_STORE_ID=your_store_id
+LEMONSQUEEZY_WEBHOOK_SECRET=your_webhook_secret
+LEMONSQUEEZY_BASIC_VARIANT_ID=your_basic_variant_id
+LEMONSQUEEZY_PREMIUM_VARIANT_ID=your_premium_variant_id
+NEXT_PUBLIC_LEMONSQUEEZY_STORE_ID=your_store_id
+
 # Application URLs
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
@@ -95,14 +113,33 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 3. Copy your publishable key and secret key to the environment variables
 4. Configure the redirect URLs in your Clerk dashboard
 
-### 6. GitHub Integration (Optional)
+### 6. Lemon Squeezy Setup (Required for Payments)
+
+1. Create a Lemon Squeezy account at [lemonsqueezy.com](https://lemonsqueezy.com)
+2. Create two products:
+   - Basic Job Posting: $99 (one-time payment)
+   - Premium Job Posting: $128 (one-time payment)
+3. Get your API credentials from Settings > API
+4. Set up a webhook endpoint pointing to `/api/webhooks/lemonsqueezy`
+5. Add all credentials to your environment variables
+
+See [LEMONSQUEEZY_SETUP.md](./LEMONSQUEEZY_SETUP.md) for detailed instructions.
+
+### 7. GitHub Integration (Optional)
 
 1. Create a GitHub Personal Access Token:
    - Go to GitHub Settings > Developer settings > Personal access tokens
-   - Generate a new token with `repo` and `user` scopes
+   - Generate a new token with `repo` scope
    - Add the token to your environment variables
 
-### 7. Run the Development Server
+### 8. Hugging Face Integration (Optional)
+
+1. Create a Hugging Face account at [huggingface.co](https://huggingface.co)
+2. Generate an API token from Settings > Access Tokens
+3. Choose your preferred model (default: meta-llama/Meta-Llama-3-70B-Instruct)
+4. Add credentials to your environment variables
+
+### 9. Run the Development Server
 
 ```bash
 pnpm dev

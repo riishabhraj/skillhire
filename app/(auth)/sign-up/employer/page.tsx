@@ -6,11 +6,6 @@ import { Building2, Users, Target } from "lucide-react"
 import Link from "next/link"
 
 export default function EmployerSignUpPage() {
-  // Set role intent in localStorage when component mounts
-  React.useEffect(() => {
-    localStorage.setItem('userRoleIntent', 'employer')
-  }, [])
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-16">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { stripe } from '@/lib/stripe'
+import { createCheckout } from '@lemonsqueezy/lemonsqueezy.js'
+import { LEMONSQUEEZY_STORE_ID, PRODUCT_VARIANTS } from '@/lib/lemonsqueezy'
 import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
 
@@ -29,53 +30,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Define pricing
-    const pricing = {
-      basic: {
-        price: 9900, // $99.00 in cents
-        name: 'Basic Job Posting',
-        description: 'Post your job with project-based evaluation'
-      },
-      premium: {
-        price: 12800, // $128.00 in cents
-        name: 'Premium Job Posting',
-        description: 'Post your job with company logo display and priority features'
-      }
+    // Get the variant ID for the selected plan
+    const variantId = planType === 'basic' ? PRODUCT_VARIANTS.basic : PRODUCT_VARIANTS.premium
+
+    if (!variantId) {
+      return NextResponse.json(
+        { error: 'Product variant not configured. Please contact support.' },
+        { status: 500 }
+      )
     }
 
-    const selectedPlan = pricing[planType as keyof typeof pricing]
-    if (!selectedPlan) {
-      return NextResponse.json({ error: 'Invalid plan type' }, { status: 400 })
-    }
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: selectedPlan.name,
-              description: selectedPlan.description,
-            },
-            unit_amount: selectedPlan.price,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/employer/dashboard?payment=success&jobId=${jobId}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/employer/post-job?payment=cancelled`,
-      metadata: {
-        userId,
-        jobId,
-        planType,
+    // Create Lemon Squeezy checkout session
+    const checkout = await createCheckout(LEMONSQUEEZY_STORE_ID, variantId, {
+      checkoutData: {
+        email: user.email,
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        custom: {
+          jobId,
+          userId,
+          planType
+        }
       },
-      customer_email: user.email,
+      checkoutOptions: {
+        embed: false,
+        media: false,
+        logo: true,
+        desc: true,
+        discount: true,
+        dark: false,
+        subscriptionPreview: false,
+        buttonColor: '#6366f1'
+      },
+      expiresAt: null,
+      preview: false,
+      testMode: process.env.NODE_ENV === 'development'
     })
 
-    return NextResponse.json({ sessionId: session.id })
+    if (checkout.error) {
+      console.error('Lemon Squeezy checkout error:', checkout.error)
+      return NextResponse.json(
+        { error: 'Failed to create checkout session' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ checkoutUrl: checkout.data?.data.attributes.url })
   } catch (error) {
     console.error('Error creating checkout session:', error)
     return NextResponse.json(

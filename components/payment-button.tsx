@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { getStripe } from '@/lib/stripe-client'
 import { CreditCard, Loader2 } from 'lucide-react'
 
 interface PaymentButtonProps {
@@ -35,19 +34,17 @@ export default function PaymentButton({
         }),
       })
 
-      const { sessionId, error } = await response.json()
+      const data = await response.json()
 
-      if (error) {
-        throw new Error(error)
+      if (data.error) {
+        throw new Error(data.error)
       }
 
-      const stripe = await getStripe()
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId,
-      })
-
-      if (stripeError) {
-        throw new Error(stripeError.message)
+      // Redirect to Lemon Squeezy checkout
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+      } else {
+        throw new Error('No checkout URL received')
       }
     } catch (error) {
       console.error('Payment error:', error)
@@ -94,7 +91,7 @@ export default function PaymentButton({
         ) : (
           <>
             <CreditCard className="mr-2 h-4 w-4" />
-            Pay with Stripe
+            Pay with Lemon Squeezy
           </>
         )}
       </Button>

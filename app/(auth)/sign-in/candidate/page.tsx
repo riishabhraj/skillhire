@@ -6,11 +6,6 @@ import { Briefcase, Zap, Star } from "lucide-react"
 import Link from "next/link"
 
 export default function CandidateSignInPage() {
-  // Set role intent in localStorage when component mounts
-  React.useEffect(() => {
-    localStorage.setItem('userRoleIntent', 'candidate')
-  }, [])
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-16">
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">

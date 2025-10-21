@@ -16,8 +16,11 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
-    // Build query
-    const query: any = { status: 'active' }
+    // Build query - ONLY show jobs that are active AND paid
+    const query: any = { 
+      status: 'active',
+      paymentStatus: 'paid'  // Critical: Only show paid jobs
+    }
     
     if (category) {
       query.category = category
@@ -111,7 +114,16 @@ export async function POST(request: NextRequest) {
 
     await connectDB()
 
-    // Create new job
+    // Validate payment-related fields
+    const planType = body.planType
+    if (!planType || (planType !== 'basic' && planType !== 'premium')) {
+      return NextResponse.json(
+        { error: 'Valid plan type (basic or premium) is required' },
+        { status: 400 }
+      )
+    }
+
+    // Create new job with PENDING payment status
     const newJob = new Job({
       title,
       description,
@@ -137,7 +149,9 @@ export async function POST(request: NextRequest) {
       useCareerSite: useCareerSite || false,
       companyId: companyId || userId,
       companyName: companyName || 'Your Company',
-      status: 'active',
+      planType: planType,
+      paymentStatus: 'pending',  // Job starts as pending payment
+      status: 'paused',  // Job is paused until payment is complete
       postedAt: new Date()
     })
 
