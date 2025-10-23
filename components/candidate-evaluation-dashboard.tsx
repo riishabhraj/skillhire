@@ -119,29 +119,43 @@ export function CandidateEvaluationDashboard({ jobId }: CandidateEvaluationDashb
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const isStatusVisible = (shortlistedAt: Date) => {
+    const now = new Date();
+    const diffInHours = Math.abs(now.getTime() - shortlistedAt.getTime()) / 36e5;
+    return diffInHours >= 48;
+  }
+
+  const getStatusIcon = (status: string, shortlistedAt: Date) => {
+    if (!isStatusVisible(shortlistedAt)) {
+      return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+
     switch (status) {
       case 'shortlisted':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'under_review':
-        return <Clock className="h-4 w-4 text-yellow-500" />
+        return <Clock className="h-4 w-4 text-yellow-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, shortlistedAt: Date) => {
+    if (!isStatusVisible(shortlistedAt)) {
+      return 'bg-gray-100 text-gray-800';
+    }
+
     switch (status) {
       case 'shortlisted':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800';
       case 'rejected':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800';
       case 'under_review':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800';
     }
   }
 
@@ -287,29 +301,43 @@ export function CandidateEvaluationDashboard({ jobId }: CandidateEvaluationDashb
 function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
   const [expanded, setExpanded] = useState(false)
 
-  const getStatusIcon = (status: string) => {
+  const isStatusVisible = (shortlistedAt: Date) => {
+    const now = new Date();
+    const diffInHours = Math.abs(now.getTime() - shortlistedAt.getTime()) / 36e5;
+    return diffInHours >= 48;
+  }
+
+  const getStatusIcon = (status: string, shortlistedAt: Date) => {
+    if (!isStatusVisible(shortlistedAt)) {
+      return <Clock className="h-4 w-4 text-gray-500" />;
+    }
+
     switch (status) {
       case 'shortlisted':
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
       case 'rejected':
-        return <XCircle className="h-4 w-4 text-red-500" />
+        return <XCircle className="h-4 w-4 text-red-500" />;
       case 'under_review':
-        return <Clock className="h-4 w-4 text-yellow-500" />
+        return <Clock className="h-4 w-4 text-yellow-500" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />
+        return <Clock className="h-4 w-4 text-gray-500" />;
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, shortlistedAt: Date) => {
+    if (!isStatusVisible(shortlistedAt)) {
+      return 'bg-gray-100 text-gray-800';
+    }
+
     switch (status) {
       case 'shortlisted':
-        return 'bg-green-100 text-green-800'
+        return 'bg-green-100 text-green-800';
       case 'rejected':
-        return 'bg-red-100 text-red-800'
+        return 'bg-red-100 text-red-800';
       case 'under_review':
-        return 'bg-yellow-100 text-yellow-800'
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-100 text-gray-800'
+        return 'bg-gray-100 text-gray-800';
     }
   }
 
@@ -319,8 +347,8 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              {getStatusIcon(evaluation.shortlistStatus)}
-              <Badge className={getStatusColor(evaluation.shortlistStatus)}>
+              {getStatusIcon(evaluation.shortlistStatus, new Date(evaluation.reviewedAt))}
+              <Badge className={getStatusColor(evaluation.shortlistStatus, new Date(evaluation.reviewedAt))}>
                 {evaluation.shortlistStatus.replace('_', ' ')}
               </Badge>
             </div>
@@ -505,4 +533,6 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
       </CardContent>
     </Card>
   )
+}
+
 }

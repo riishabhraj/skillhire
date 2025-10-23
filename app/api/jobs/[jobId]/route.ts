@@ -4,21 +4,21 @@ import connectDB from '@/lib/mongodb'
 import Job from '@/lib/models/Job'
 import Application from '@/lib/models/Application'
 
-// GET /api/jobs/[id] - Get job details
+// GET /api/jobs/[jobId] - Get job details
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const { id } = await params
-    console.log('API: Fetching job with ID:', id)
+    const { jobId } = await params
+    console.log('API: Fetching job with ID:', jobId)
     await connectDB()
     
-    const job = await Job.findById(id)
+    const job = await Job.findById(jobId)
     console.log('API: Job found:', job ? 'Yes' : 'No')
     
     if (!job) {
-      console.log('API: Job not found for ID:', id)
+      console.log('API: Job not found for ID:', jobId)
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
     }
 
@@ -26,7 +26,7 @@ export async function GET(
     job.views = (job.views || 0) + 1
     await job.save()
 
-    console.log('API: Returning job data for ID:', id)
+    console.log('API: Returning job data for ID:', jobId)
     return NextResponse.json(job)
   } catch (error) {
     console.error('API: Error fetching job:', error)
@@ -37,13 +37,13 @@ export async function GET(
   }
 }
 
-// PUT /api/jobs/[id] - Update job (employer only)
+// PUT /api/jobs/[jobId] - Update job (employer only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { jobId } = await params
     const { userId } = await auth()
     
     if (!userId) {
@@ -54,7 +54,7 @@ export async function PUT(
     
     await connectDB()
     
-    const job = await Job.findById(id)
+    const job = await Job.findById(jobId)
     
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
@@ -83,13 +83,13 @@ export async function PUT(
   }
 }
 
-// DELETE /api/jobs/[id] - Delete job (employer only)
+// DELETE /api/jobs/[jobId] - Delete job (employer only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ jobId: string }> }
 ) {
   try {
-    const { id } = await params
+    const { jobId } = await params
     const { userId } = await auth()
     
     if (!userId) {
@@ -98,7 +98,7 @@ export async function DELETE(
 
     await connectDB()
     
-    const job = await Job.findById(id)
+    const job = await Job.findById(jobId)
     
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 })
@@ -110,10 +110,10 @@ export async function DELETE(
     }
 
     // Delete associated applications
-    await Application.deleteMany({ jobId: id })
+    await Application.deleteMany({ jobId: jobId })
 
     // Delete the job
-    await Job.findByIdAndDelete(id)
+    await Job.findByIdAndDelete(jobId)
     
     return NextResponse.json({ message: 'Job deleted successfully' })
   } catch (error) {
@@ -124,3 +124,4 @@ export async function DELETE(
     )
   }
 }
+

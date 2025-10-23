@@ -72,11 +72,13 @@ const UserSchema = new Schema<IUser>({
   profile: {
     firstName: {
       type: String,
-      required: true
+      required: false,
+      default: ''
     },
     lastName: {
       type: String,
-      required: true
+      required: false,
+      default: ''
     },
     profilePicture: String,
     bio: String,

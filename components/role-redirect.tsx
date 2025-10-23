@@ -1,24 +1,49 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { useUser } from '@clerk/nextjs'
 
 export function RoleRedirect() {
   const router = useRouter()
+  const { isLoaded, isSignedIn, user } = useUser()
+  const [role, setRole] = useState<'employer' | 'candidate' | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user has a role set
-    const userRole = localStorage.getItem("userRole")
-    
-    if (userRole === "employer") {
+    const fetchUserRole = async () => {
+      if (isLoaded && isSignedIn && user?.id) {
+        try {
+          const response = await fetch(`/api/users/${user.id}`)
+          if (response.ok) {
+            const userData = await response.json()
+            setRole(userData.role)
+          } else {
+            setRole(null)
+          }
+        } catch {
+          setRole(null)
+        } finally {
+          setLoading(false)
+        }
+      } else if (isLoaded && !isSignedIn) {
+        setLoading(false)
+        setRole(null)
+      }
+    }
+    fetchUserRole()
+  }, [isLoaded, isSignedIn, user])
+
+  useEffect(() => {
+    if (loading) return
+    if (role === "employer") {
       router.push("/employer/dashboard")
-    } else if (userRole === "candidate") {
+    } else if (role === "candidate") {
       router.push("/candidate/dashboard")
     } else {
-      // No role set, redirect to onboarding
-      router.push("/onboarding")
+      router.push('/')
     }
-  }, [router])
+  }, [role, loading, router])
 
   return (
     <div className="flex items-center justify-center min-h-screen">

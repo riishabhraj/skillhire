@@ -86,7 +86,7 @@ export default function CandidateSignInPage() {
                   footerActionLink: "text-primary hover:text-primary/80",
                 },
               }}
-              fallbackRedirectUrl="/onboarding/candidate"
+              signUpUrl="/sign-up/candidate"
             />
 
             <div className="mt-6 text-center">
@@ -101,7 +101,7 @@ export default function CandidateSignInPage() {
             <div className="mt-4 text-center">
               <p className="text-sm text-muted-foreground">
                 Hiring talent?{" "}
-                <Link href="/sign-in/employer" className="text-primary hover:text-primary/80 font-medium">
+                <Link href="/employer" className="text-primary hover:text-primary/80 font-medium">
                   Sign in as employer
                 </Link>
               </p>

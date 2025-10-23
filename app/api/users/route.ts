@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
+import { isCompanyEmail, getCompanyEmailErrorMessage } from '@/lib/utils/email-validation'
 
 // GET /api/users - Get current user profile
 export async function GET() {
@@ -56,6 +57,14 @@ export async function POST(request: NextRequest) {
     if (!['employer', 'candidate'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role' },
+        { status: 400 }
+      )
+    }
+
+    // Validate employer email - must be company email, not free provider
+    if (role === 'employer' && !isCompanyEmail(email)) {
+      return NextResponse.json(
+        { error: getCompanyEmailErrorMessage(email) },
         { status: 400 }
       )
     }

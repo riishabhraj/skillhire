@@ -12,13 +12,13 @@ export default function RoleBasedNav() {
     <nav className="flex items-center gap-3">
       <SignedOut>
         <Link
-          href="/sign-in/candidate"
+          href="/candidate"
           className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground hover:bg-muted"
         >
           Sign In
         </Link>
         <Link
-          href="/sign-up/employer"
+          href="/employer"
           className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:opacity-90"
         >
           For Recruiters
@@ -30,16 +30,6 @@ export default function RoleBasedNav() {
           <div className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             <span className="text-sm text-muted-foreground">Loading...</span>
-          </div>
-        ) : role === null ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Please complete onboarding</span>
-            <Link
-              href="/onboarding"
-              className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:opacity-90"
-            >
-              Get Started
-            </Link>
           </div>
         ) : (
           <div className="flex items-center gap-3">

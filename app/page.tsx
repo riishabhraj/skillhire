@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { ArrowRight, CheckCircle, Users, Zap, Target, Shield, Star, TrendingUp } from "lucide-react"
+import { SmartNavButton } from "@/components/smart-nav-button"
 
 export default function HomePage() {
   return (
@@ -21,20 +22,22 @@ export default function HomePage() {
               Faster interviews, better hires, evidence-based decisions.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href="/sign-up/employer"
+              <SmartNavButton
+                signedInHref="/employer/dashboard"
+                signedOutHref="/employer"
                 className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-base font-semibold text-primary-foreground shadow-lg transition-all hover:bg-primary/90 hover:shadow-xl"
               >
                 Hire Talent
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/sign-in/candidate"
+              </SmartNavButton>
+              <SmartNavButton
+                signedInHref="/jobs"
+                signedOutHref="/candidate"
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-3 text-base font-semibold text-foreground transition-all hover:bg-muted"
               >
                 Find Jobs
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </SmartNavButton>
             </div>
             <div className="mt-8 flex items-center justify-center gap-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
@@ -269,7 +272,7 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <Link
-                  href="/sign-up/employer"
+                  href="/employer"
                   className="mt-6 inline-flex w-full items-center justify-center rounded-lg border border-border bg-background px-4 py-2 text-sm font-semibold hover:bg-muted"
                 >
                   Get Started
@@ -308,10 +311,10 @@ export default function HomePage() {
                   </li>
                 </ul>
                 <Link
-                  href="/sign-up/employer"
+                  href="/employer"
                   className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
                 >
-                  Start Free Trial
+                  Get Started
                 </Link>
               </div>
             </div>
@@ -399,19 +402,21 @@ export default function HomePage() {
             Join 500+ companies already using SkillHire to find better talent faster.
           </p> */}
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/sign-up/employer"
+            <SmartNavButton
+              signedInHref="/employer/dashboard"
+              signedOutHref="/employer"
               className="inline-flex items-center gap-2 rounded-lg bg-background px-6 py-3 text-base font-semibold text-foreground shadow-lg transition-all hover:bg-background/90"
             >
               Start Hiring
               <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/sign-in/candidate"
+            </SmartNavButton>
+            <SmartNavButton
+              signedInHref="/jobs"
+              signedOutHref="/candidate"
               className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-transparent px-6 py-3 text-base font-semibold text-primary-foreground transition-all hover:bg-primary-foreground/10"
             >
               Find Opportunities
-            </Link>
+            </SmartNavButton>
           </div>
         </div>
       </section>

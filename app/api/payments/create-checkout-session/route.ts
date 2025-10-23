@@ -40,11 +40,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prepare customer name
+    const firstName = user.profile?.firstName || ''
+    const lastName = user.profile?.lastName || ''
+    const customerName = `${firstName} ${lastName}`.trim() || user.profile?.employerProfile?.companyName || user.email.split('@')[0]
+
+    console.log('Creating checkout for:', { email: user.email, name: customerName, variantId })
+
     // Create Lemon Squeezy checkout session
     const checkout = await createCheckout(LEMONSQUEEZY_STORE_ID, variantId, {
       checkoutData: {
         email: user.email,
-        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        name: customerName,
         custom: {
           jobId,
           userId,
@@ -67,18 +74,20 @@ export async function POST(request: NextRequest) {
     })
 
     if (checkout.error) {
-      console.error('Lemon Squeezy checkout error:', checkout.error)
+      console.error('Lemon Squeezy checkout error:', JSON.stringify(checkout.error, null, 2))
       return NextResponse.json(
-        { error: 'Failed to create checkout session' },
+        { error: 'Failed to create checkout session', details: checkout.error },
         { status: 500 }
       )
     }
 
+    console.log('✅ Checkout created successfully:', checkout.data?.data.attributes.url)
     return NextResponse.json({ checkoutUrl: checkout.data?.data.attributes.url })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating checkout session:', error)
+    console.error('Error details:', error.cause || error.message)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
   }

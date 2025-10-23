@@ -16,8 +16,8 @@ export default function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   useEffect(() => {
     if (!isDetecting && isSignedIn) {
       if (!role) {
-        // User not found in database, redirect to onboarding
-        router.push('/onboarding')
+        // Redirect to home or appropriate page if user role is not found
+        router.push('/')
         return
       }
 

@@ -217,7 +217,7 @@ export default function PostJobPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6 px-4 py-8">
       {/* Progress Steps */}
       <div className="flex items-center justify-center space-x-4">
         {steps.map((stepItem, index) => {

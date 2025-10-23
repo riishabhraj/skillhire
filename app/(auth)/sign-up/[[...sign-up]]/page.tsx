@@ -15,7 +15,7 @@ export default function SignUpPage() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
           {/* Employer Sign Up */}
           <Link
-            href="/sign-up/employer"
+            href="/employer"
             className="group rounded-xl border border-border bg-card p-8 hover:bg-muted/50 transition-all hover:shadow-lg"
           >
             <div className="flex items-center gap-4 mb-6">
@@ -51,7 +51,7 @@ export default function SignUpPage() {
 
           {/* Candidate Sign Up */}
           <Link
-            href="/sign-up/candidate"
+            href="/candidate"
             className="group rounded-xl border border-border bg-card p-8 hover:bg-muted/50 transition-all hover:shadow-lg"
           >
             <div className="flex items-center gap-4 mb-6">

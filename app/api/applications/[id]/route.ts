@@ -83,7 +83,7 @@ export async function PATCH(
 
     await application.save()
 
-    // Update job shortlisted applications count
+    // Update job shortlisted applications count if status changes
     const job = await Job.findById(application.jobId._id)
     if (job) {
       if (status === 'shortlisted' && application.status !== 'shortlisted') {

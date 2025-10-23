@@ -6,6 +6,8 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/candidate', // Unified candidate auth page
+  '/employer', // Unified employer auth page
   '/jobs',
   '/jobs/(.*)', // Allow individual job detail pages
   '/remote-jobs',
@@ -20,10 +22,6 @@ const isProtectedRoute = createRouteMatcher([
   '/profile',
   '/settings',
   '/messages',
-  '/onboarding',
-  '/onboarding/employer',
-  '/onboarding/candidate',
-  '/jobs',
 ])
 
 // Define employer-only routes
@@ -52,93 +50,21 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next()
   }
 
-  // Redirect unauthenticated users to sign-in
+  // Redirect unauthenticated users trying to access protected routes
   if (!userId) {
-    const signInUrl = new URL('/sign-in', req.url)
-    signInUrl.searchParams.set('redirect_url', pathname)
-    return NextResponse.redirect(signInUrl)
-  }
-
-  // Get user role from Clerk metadata or database
-  const userRole = await getUserRoleFromRequest(req, userId)
-  
-
-  // If user is trying to access onboarding but already has a role, redirect to their dashboard
-  if ((pathname === '/onboarding' || pathname.startsWith('/onboarding/')) && userRole) {
-    const dashboardPath = userRole === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'
-    return NextResponse.redirect(new URL(dashboardPath, req.url))
-  }
-
-  // If user doesn't have a role and is not on onboarding, redirect to general onboarding
-  if (!userRole && !pathname.startsWith('/onboarding')) {
-    return NextResponse.redirect(new URL('/onboarding', req.url))
-  }
-
-  // Allow access to role-specific onboarding routes for users without roles
-  if (!userRole && (pathname === '/onboarding/employer' || pathname === '/onboarding/candidate')) {
-    return NextResponse.next()
-  }
-
-  // Handle role-based access control for specific routes
-  if (isEmployerRoute(req)) {
-    if (userRole !== 'employer') {
-      // Redirect to appropriate dashboard based on role
-      const redirectPath = userRole === 'candidate' ? '/candidate/dashboard' : '/onboarding'
-      return NextResponse.redirect(new URL(redirectPath, req.url))
+    // Only redirect if they're trying to access a protected route
+    if (isEmployerRoute(req) || isCandidateRoute(req) || isProtectedRoute(req)) {
+      const signInUrl = new URL('/sign-in', req.url)
+      signInUrl.searchParams.set('redirect_url', pathname)
+      return NextResponse.redirect(signInUrl)
     }
   }
 
-  if (isCandidateRoute(req)) {
-    if (userRole !== 'candidate') {
-      // Redirect to appropriate dashboard based on role
-      const redirectPath = userRole === 'employer' ? '/employer/dashboard' : '/onboarding'
-      return NextResponse.redirect(new URL(redirectPath, req.url))
-    }
-  }
-
-  // If user is on general dashboard route, redirect to their role-specific dashboard
-  if (pathname === '/dashboard' && userRole) {
-    const dashboardPath = userRole === 'employer' ? '/employer/dashboard' : '/candidate/dashboard'
-    return NextResponse.redirect(new URL(dashboardPath, req.url))
-  }
+  // For authenticated users, let the client-side RoleGuard handle role-based redirects
+  // This avoids the complexity of role detection in middleware
 
   return NextResponse.next()
 })
-
-// Helper function to get user role from database
-async function getUserRoleFromRequest(req: Request, userId: string): Promise<'employer' | 'candidate' | null> {
-  try {
-    if (!userId) {
-      return null
-    }
-
-    // Check if we're already on a role-specific route
-    const pathname = new URL(req.url).pathname
-    if (pathname.startsWith('/employer/')) {
-      return 'employer'
-    } else if (pathname.startsWith('/candidate/')) {
-      return 'candidate'
-    }
-
-    // Check referrer to determine role intent
-    const referrer = req.headers.get('referer')
-    if (referrer) {
-      const referrerUrl = new URL(referrer)
-      if (referrerUrl.pathname.includes('/sign-in/employer') || referrerUrl.pathname.includes('/sign-up/employer')) {
-        return 'employer'
-      } else if (referrerUrl.pathname.includes('/sign-in/candidate') || referrerUrl.pathname.includes('/sign-up/candidate')) {
-        return 'candidate'
-      }
-    }
-
-    // For now, return null to force proper role detection on client side
-    // The client-side useRoleDetection hook will handle fetching from database
-    return null
-  } catch (error) {
-    console.error('Error getting user role:', error)
-    return null
-  }
-}
 
 export const config = {
   matcher: [

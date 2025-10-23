@@ -9,24 +9,17 @@ export default function SignInPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user has a role preference in localStorage
-    const userRole = localStorage.getItem("userRoleIntent")
-    
     // Check if user came from a specific referrer
     const referrer = document.referrer
     
-    if (userRole === "employer") {
-      router.push("/sign-in/employer")
-    } else if (userRole === "candidate") {
-      router.push("/sign-in/candidate")
-    } else if (referrer.includes('/sign-up/employer') || referrer.includes('/employer')) {
+    if (referrer.includes('/employer')) {
       // If user came from employer pages, redirect to employer sign-in
-      router.push("/sign-in/employer")
-    } else if (referrer.includes('/sign-up/candidate') || referrer.includes('/candidate')) {
+      router.push("/employer")
+    } else if (referrer.includes('/candidate')) {
       // If user came from candidate pages, redirect to candidate sign-in
-      router.push("/sign-in/candidate")
+      router.push("/candidate")
     }
-    // If no role preference or specific referrer, show role selection
+    // If no specific referrer, show role selection
   }, [router])
 
   return (
@@ -40,7 +33,7 @@ export default function SignInPage() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Employer Sign In */}
           <Link
-            href="/sign-in/employer"
+            href="/employer"
             className="group rounded-lg border border-border bg-card p-6 hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-4 mb-4">
@@ -59,7 +52,7 @@ export default function SignInPage() {
 
           {/* Candidate Sign In */}
           <Link
-            href="/sign-in/candidate"
+            href="/candidate"
             className="group rounded-lg border border-border bg-card p-6 hover:bg-muted/50 transition-colors"
           >
             <div className="flex items-center gap-4 mb-4">

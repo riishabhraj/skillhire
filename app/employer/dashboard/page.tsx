@@ -45,6 +45,7 @@ export default function EmployerDashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activatingJobId, setActivatingJobId] = useState<string | null>(null)
   const { userData, isLoaded } = useUserData()
 
   useEffect(() => {
@@ -85,6 +86,28 @@ export default function EmployerDashboardPage() {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleActivateJob = async (jobId: string) => {
+    try {
+      setActivatingJobId(jobId)
+      const response = await fetch(`/api/jobs/${jobId}/activate`, {
+        method: 'POST',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to activate job')
+      }
+
+      // Refresh dashboard data
+      await fetchDashboardData()
+      alert('Job activated successfully!')
+    } catch (err) {
+      console.error('Error activating job:', err)
+      alert('Failed to activate job. Please try again.')
+    } finally {
+      setActivatingJobId(null)
     }
   }
 
@@ -288,6 +311,27 @@ export default function EmployerDashboardPage() {
                       </Link>
                     </Button>
                   </div>
+                  
+                  {job.status === 'paused' && (
+                    <Button 
+                      onClick={() => handleActivateJob(job._id)}
+                      disabled={activatingJobId === job._id}
+                      variant="default"
+                      size="sm"
+                      className="w-full bg-green-600 hover:bg-green-700"
+                    >
+                      {activatingJobId === job._id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Activating...
+                        </>
+                      ) : (
+                        <>
+                          Activate Job (Test Mode)
+                        </>
+                      )}
+                    </Button>
+                  )}
                   
                   <div className="text-xs text-muted-foreground">
                     Posted {new Date(job.postedAt).toLocaleDateString()}
