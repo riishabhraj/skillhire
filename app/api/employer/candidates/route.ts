@@ -41,9 +41,10 @@ export async function GET(request: NextRequest) {
     const candidatesData = await User.find({ 
       clerkId: { $in: candidateIds },
       role: 'candidate'
-    }).select('firstName lastName email profilePicture role candidateProfile')
+    }).select('clerkId firstName lastName email profilePicture role candidateProfile')
     
     console.log('Candidates data found:', candidatesData.length)
+    console.log('Candidate IDs in DB:', candidatesData.map(c => c.clerkId))
 
     // Create a map of candidates with their applications
     const candidateMap = new Map()
@@ -51,10 +52,23 @@ export async function GET(request: NextRequest) {
     applications.forEach(app => {
       if (app.candidateId) {
         const candidate = candidatesData.find(c => c.clerkId === app.candidateId)
+        console.log(`Looking for candidate ${app.candidateId}, found:`, candidate ? 'YES' : 'NO')
         if (candidate) {
           if (!candidateMap.has(candidate._id)) {
             candidateMap.set(candidate._id, {
-              ...candidate.toObject(),
+              _id: candidate._id,
+              firstName: candidate.profile?.firstName || '',
+              lastName: candidate.profile?.lastName || '',
+              email: candidate.email,
+              profilePicture: candidate.profile?.profilePicture,
+              role: candidate.role,
+              candidateProfile: candidate.profile?.candidateProfile || {
+                skills: { technical: [], soft: [] },
+                experience: { totalYears: 0, relevantYears: 0, previousRoles: [] },
+                availability: 'flexible',
+                location: '',
+                portfolio: []
+              },
               applications: []
             })
           }
@@ -68,6 +82,8 @@ export async function GET(request: NextRequest) {
         }
       }
     })
+    
+    console.log('Final candidate map size:', candidateMap.size)
 
     const candidates = Array.from(candidateMap.values())
 

@@ -112,8 +112,8 @@ export default function JobApplicationsPage() {
   }
 
   const handleViewProfile = (candidateId: string) => {
-    // Open a placeholder view for now; integrate a dedicated profile page later
-    window.open(`/employer/candidates?candidateId=${candidateId}`, '_blank')
+    // Navigate to the candidate profile page
+    window.open(`/employer/candidates/${candidateId}`, '_blank')
   }
 
   const updateApplicationStatus = async (applicationId: string, status: 'shortlisted' | 'rejected') => {
@@ -225,7 +225,7 @@ export default function JobApplicationsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {applications.map((application) => (
             <Card key={application._id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -253,115 +253,96 @@ export default function JobApplicationsPage() {
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-6">
-                {/* Cover Letter */}
+              <CardContent className="space-y-4">
+                {/* Cover Letter Preview */}
                 <div>
                   <h4 className="font-medium mb-2">Cover Letter</h4>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">
+                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg line-clamp-3">
                     {application.coverLetter}
                   </p>
                 </div>
 
-                {/* Projects */}
+                {/* Projects Summary */}
                 {application.projects.length > 0 && (
                   <div>
-                    <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <h4 className="font-medium mb-2 flex items-center gap-2">
                       <Code className="h-4 w-4" />
                       Projects ({application.projects.length})
                     </h4>
-                    <div className="space-y-4">
-                      {application.projects.map((project, index) => (
-                        <div key={index} className="border rounded-lg p-4">
+                    <div className="space-y-2">
+                      {application.projects.slice(0, 2).map((project, index) => (
+                        <div key={index} className="border rounded-lg p-3">
                           <div className="flex items-start justify-between mb-2">
-                            <h5 className="font-medium">{project.title}</h5>
+                            <h5 className="font-medium text-sm">{project.title}</h5>
                             <Badge variant="outline" className="text-xs">
                               {project.complexity}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground mb-3">
+                          <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
                             {project.description}
                           </p>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {project.technologies.map((tech, techIndex) => (
+                          <div className="flex flex-wrap gap-1">
+                            {project.technologies.slice(0, 3).map((tech, techIndex) => (
                               <Badge key={techIndex} variant="secondary" className="text-xs">
                                 {tech}
                               </Badge>
                             ))}
+                            {project.technologies.length > 3 && (
+                              <Badge variant="secondary" className="text-xs">
+                                +{project.technologies.length - 3} more
+                              </Badge>
+                            )}
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-muted-foreground">
-                            <div>
-                              <span className="font-medium">Role:</span> {project.role}
-                            </div>
-                            <div>
-                              <span className="font-medium">Duration:</span> {project.duration}
-                            </div>
-                            <div>
-                              <span className="font-medium">Team Size:</span> {project.teamSize}
-                            </div>
-                            <div>
-                              <span className="font-medium">Scale:</span> {project.scale}
-                            </div>
-                          </div>
-                          {(project.githubUrl || project.liveUrl) && (
-                            <div className="flex gap-2 mt-3">
-                              {project.githubUrl && (
-                                <Button asChild size="sm" variant="outline">
-                                  <a href={project.githubUrl} target="_blank" rel="noopener noreferrer">
-                                    View Code
-                                  </a>
-                                </Button>
-                              )}
-                              {project.liveUrl && (
-                                <Button asChild size="sm" variant="outline">
-                                  <a href={project.liveUrl} target="_blank" rel="noopener noreferrer">
-                                    Live Demo
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                          )}
                         </div>
                       ))}
+                      {application.projects.length > 2 && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          +{application.projects.length - 2} more projects
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Skills */}
+                {/* Skills Summary */}
                 {application.skills.technical.length > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Technical Skills</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {application.skills.technical.map((skill, index) => (
+                    <div className="flex flex-wrap gap-1">
+                      {application.skills.technical.slice(0, 5).map((skill, index) => (
                         <Badge key={index} variant="outline" className="text-xs">
-                          {skill.name} ({skill.level})
+                          {skill.name}
                         </Badge>
                       ))}
+                      {application.skills.technical.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{application.skills.technical.length - 5} more
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Experience */}
+                {/* Experience Summary */}
                 {application.experience.totalYears > 0 && (
                   <div>
                     <h4 className="font-medium mb-2">Experience</h4>
                     <div className="text-sm text-muted-foreground">
-                      <p>Total: {application.experience.totalYears} years</p>
-                      <p>Relevant: {application.experience.relevantYears} years</p>
+                      <p>{application.experience.totalYears} years total, {application.experience.relevantYears} relevant</p>
                     </div>
                   </div>
                 )}
 
-                {/* Evaluation */}
+                {/* Evaluation Summary */}
                 {application.evaluation && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-2">Evaluation</h4>
+                  <div className="border-t pt-3">
                     <div className="bg-muted p-3 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
+                      <div className="flex items-center gap-2 mb-1">
                         <Star className="h-4 w-4" />
-                        <span className="font-medium">Score: {application.evaluation.overallScore}/100</span>
+                        <span className="font-medium text-sm">Score: {application.evaluation.overallScore}/100</span>
                       </div>
                       {application.evaluation.feedback && (
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs text-muted-foreground line-clamp-2">
                           {application.evaluation.feedback}
                         </p>
                       )}
@@ -370,8 +351,8 @@ export default function JobApplicationsPage() {
                 )}
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-4 border-t">
-                  <Button size="sm" onClick={() => handleViewProfile(application.candidateId)}>
+                <div className="flex gap-2 pt-3 border-t">
+                  <Button size="sm" onClick={() => handleViewProfile(application.candidateId)} className="flex-1">
                     View Full Profile
                   </Button>
                   <Button 

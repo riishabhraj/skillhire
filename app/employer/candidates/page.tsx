@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Search, Users, Star, MapPin, Briefcase } from "lucide-react"
+import { Loader2, Search, Users } from "lucide-react"
 
 interface Candidate {
   _id: string
@@ -82,11 +82,8 @@ export default function CandidatesPage() {
   }
 
   const handleViewProfile = (candidateId: string) => {
-    console.log('Viewing profile for candidate:', candidateId)
-    // For now, show an alert since we don't have a profile page yet
-    alert(`Viewing profile for candidate: ${candidateId}`)
-    // TODO: Navigate to candidate profile page when created
-    // window.open(`/employer/candidates/${candidateId}`, '_blank')
+    // Navigate to the candidate profile page
+    window.open(`/employer/candidates/${candidateId}`, '_blank')
   }
 
   const handleShortlist = async (applicationId: string, candidateId: string) => {
@@ -177,18 +174,18 @@ export default function CandidatesPage() {
 
   const filteredCandidates = candidates.filter(candidate => {
     const matchesSearch = 
-      candidate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.candidateProfile.skills.technical.some(skill => 
+      (candidate.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (candidate.candidateProfile?.skills?.technical || []).some(skill => 
         skill.toLowerCase().includes(searchTerm.toLowerCase())
       )
 
     const matchesStatus = statusFilter === "all" || 
-      candidate.applications.some(app => app.status === statusFilter)
+      (candidate.applications || []).some(app => app.status === statusFilter)
 
     const matchesScore = scoreFilter === "all" || 
-      candidate.applications.some(app => {
+      (candidate.applications || []).some(app => {
         if (!app.evaluation?.overallScore) return false
         const score = app.evaluation.overallScore
         switch (scoreFilter) {
@@ -308,37 +305,21 @@ export default function CandidatesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCandidates.map((candidate) => {
-            const latestApplication = candidate.applications
+            const latestApplication = (candidate.applications || [])
               .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())[0]
             
             return (
               <Card key={candidate._id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                        {candidate.profilePicture ? (
-                          <img 
-                            src={candidate.profilePicture} 
-                            alt={`${candidate.firstName} ${candidate.lastName}`}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-lg font-semibold text-primary">
-                            {candidate.firstName[0]}{candidate.lastName[0]}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {candidate.firstName} {candidate.lastName}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">{candidate.email}</p>
-                      </div>
+                    <div>
+                      <CardTitle className="text-lg">
+                        {(candidate.firstName || '')} {(candidate.lastName || '')}
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground">{candidate.email || 'No email'}</p>
                     </div>
                     {latestApplication?.evaluation?.overallScore && (
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Star className="h-3 w-3" />
+                      <Badge variant="outline">
                         {latestApplication.evaluation.overallScore}/100
                       </Badge>
                     )}
@@ -346,28 +327,18 @@ export default function CandidatesPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      {candidate.candidateProfile.location}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Briefcase className="h-4 w-4" />
-                      {candidate.candidateProfile.experience.totalYears} years experience
-                    </div>
-                  </div>
 
                   <div>
                     <h4 className="text-sm font-medium mb-2">Technical Skills</h4>
                     <div className="flex flex-wrap gap-1">
-                      {candidate.candidateProfile.skills.technical.slice(0, 4).map((skill, index) => (
+                      {(candidate.candidateProfile?.skills?.technical || []).slice(0, 4).map((skill, index) => (
                         <Badge key={index} variant="secondary" className="text-xs">
                           {skill}
                         </Badge>
                       ))}
-                      {candidate.candidateProfile.skills.technical.length > 4 && (
+                      {(candidate.candidateProfile?.skills?.technical || []).length > 4 && (
                         <Badge variant="outline" className="text-xs">
-                          +{candidate.candidateProfile.skills.technical.length - 4} more
+                          +{(candidate.candidateProfile?.skills?.technical || []).length - 4} more
                         </Badge>
                       )}
                     </div>
