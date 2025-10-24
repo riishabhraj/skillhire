@@ -4,6 +4,7 @@ export interface IJob extends Document {
   title: string
   companyId: string
   companyName: string
+  companyLogo?: string
   description: string
   requirements: string[]
   preferredSkills: string[]
@@ -73,6 +74,9 @@ const JobSchema = new Schema<IJob>({
   companyName: {
     type: String,
     required: true
+  },
+  companyLogo: {
+    type: String
   },
   description: {
     type: String,

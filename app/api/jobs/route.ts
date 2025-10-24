@@ -101,7 +101,8 @@ export async function POST(request: NextRequest) {
       careerSiteUrl,
       useCareerSite,
       companyId,
-      companyName
+      companyName,
+      companyLogo
     } = body
 
     // Validate required fields
@@ -149,6 +150,7 @@ export async function POST(request: NextRequest) {
       useCareerSite: useCareerSite || false,
       companyId: companyId || userId,
       companyName: companyName || 'Your Company',
+      companyLogo: companyLogo || '',
       planType: planType,
       paymentStatus: 'pending',  // Job starts as pending payment
       status: 'paused',  // Job is paused until payment is complete

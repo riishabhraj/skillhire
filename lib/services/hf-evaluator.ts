@@ -14,7 +14,7 @@ export class HFEvaluatorService {
   private model: string
 
   constructor(model?: string, token?: string) {
-    this.model = model || process.env.HF_MODEL || 'meta-llama/Meta-Llama-3-70B-Instruct'
+    this.model = model || process.env.HF_MODEL || 'google/flan-t5-large'
     this.endpoint = `https://api-inference.huggingface.co/models/${this.model}`
     this.token = token || process.env.HF_TOKEN
   }
@@ -28,9 +28,13 @@ export class HFEvaluatorService {
     candidate: any
     projects: any[]
   }): Promise<HFEvaluationResult | null> {
-    if (!this.isConfigured()) return null
+    if (!this.isConfigured()) {
+      console.log('HF evaluation skipped: No token configured')
+      return null
+    }
 
     const prompt = this.buildPrompt(params)
+    console.log('HF evaluation starting with model:', this.model)
 
     try {
       const res = await fetch(this.endpoint, {
@@ -51,13 +55,19 @@ export class HFEvaluatorService {
 
       if (!res.ok) {
         const text = await res.text()
+        console.error(`HF API error ${res.status}: ${text}`)
         throw new Error(`HF API error ${res.status}: ${text}`)
       }
       const data = await res.json()
+      console.log('HF API response:', data)
       const text: string = Array.isArray(data) ? data[0]?.generated_text ?? '' : data?.generated_text ?? ''
       const json = this.extractJson(text)
-      if (!json) return null
+      if (!json) {
+        console.log('Failed to extract JSON from HF response:', text)
+        return null
+      }
 
+      console.log('HF evaluation successful:', json)
       return {
         projectScore: this.clamp(json.projectScore),
         skillsScore: this.clamp(json.skillsScore),

@@ -126,7 +126,7 @@ export class GitHubEnhancementService {
         actualTechnologies: Object.keys(languages),
         languageDistribution: languages,
         commitCount: commits.length,
-        totalCommits: stats.reduce((sum, contributor) => sum + contributor.total, 0),
+        totalCommits: Array.isArray(stats) ? stats.reduce((sum, contributor) => sum + contributor.total, 0) : 0,
         repositorySize: repoData.size,
         stars: repoData.stargazers_count,
         forks: repoData.forks_count,

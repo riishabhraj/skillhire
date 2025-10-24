@@ -534,5 +534,3 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
     </Card>
   )
 }
-
-}

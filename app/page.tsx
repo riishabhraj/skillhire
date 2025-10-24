@@ -1,8 +1,46 @@
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@clerk/nextjs"
 import Link from "next/link"
-import { ArrowRight, CheckCircle, Users, Zap, Target, Shield, Star, TrendingUp } from "lucide-react"
+import { ArrowRight, CheckCircle, Users, Zap, Target, Shield, Star, TrendingUp, Loader2 } from "lucide-react"
 import { SmartNavButton } from "@/components/smart-nav-button"
+import { useRoleDetection } from "@/hooks/use-role-detection"
 
 export default function HomePage() {
+  const { isSignedIn } = useAuth()
+  const { role, isDetecting } = useRoleDetection()
+  const router = useRouter()
+
+  // Redirect signed-in users to their dashboard
+  useEffect(() => {
+    if (isSignedIn && !isDetecting && role) {
+      if (role === 'employer') {
+        router.push('/employer/dashboard')
+      } else if (role === 'candidate') {
+        router.push('/candidate/dashboard')
+      }
+    }
+  }, [isSignedIn, role, isDetecting, router])
+
+  // Show loading state while redirecting
+  if (isSignedIn && isDetecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't show landing page content if signed in
+  if (isSignedIn) {
+    return null
+  }
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}

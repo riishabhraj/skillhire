@@ -70,7 +70,8 @@ export async function POST(request: NextRequest) {
       },
       expiresAt: null,
       preview: false,
-      testMode: process.env.NODE_ENV === 'development'
+      testMode: process.env.NODE_ENV === 'development',
+      redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/employer/dashboard`
     })
 
     if (checkout.error) {

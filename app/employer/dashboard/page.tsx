@@ -272,10 +272,6 @@ export default function EmployerDashboardPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {job.description}
-                  </p>
-
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-4 w-4" />
@@ -298,14 +294,14 @@ export default function EmployerDashboardPage() {
                     </span>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Button asChild className="flex-1">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button asChild size="sm">
                       <Link href={`/employer/jobs/${job._id}`}>
-                        <Eye className="h-4 w-4 mr-2" />
+                        <Eye className="h-4 w-4 mr-1" />
                         View Details
                       </Link>
                     </Button>
-                    <Button asChild variant="outline">
+                    <Button asChild variant="outline" size="sm">
                       <Link href={`/employer/jobs/${job._id}/applications`}>
                         Applications
                       </Link>

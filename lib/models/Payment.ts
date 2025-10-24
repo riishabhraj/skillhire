@@ -1,8 +1,8 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
 
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded'
-export type PaymentMethod = 'stripe' | 'paypal' | 'bank_transfer'
-export type PlanType = 'basic' | 'professional' | 'enterprise'
+export type PaymentMethod = 'lemonsqueezy' | 'stripe' | 'paypal' | 'bank_transfer'
+export type PlanType = 'basic' | 'premium'
 
 export interface IPayment extends Document {
   userId: string // Clerk user ID
@@ -12,6 +12,12 @@ export interface IPayment extends Document {
   currency: string
   status: PaymentStatus
   paymentMethod: PaymentMethod
+  // Lemon Squeezy specific fields
+  lemonSqueezyOrderId?: string
+  lemonSqueezyCheckoutId?: string
+  lemonSqueezyCustomerId?: string
+  
+  // Stripe specific fields (legacy)
   stripePaymentIntentId?: string
   stripeSessionId?: string
   transactionId?: string
@@ -34,7 +40,7 @@ const PaymentSchema: Schema = new Schema(
     planType: { 
       type: String, 
       required: true, 
-      enum: ['basic', 'professional', 'enterprise'] 
+      enum: ['basic', 'premium'] 
     },
     amount: { type: Number, required: true },
     currency: { type: String, default: 'USD' },
@@ -47,8 +53,13 @@ const PaymentSchema: Schema = new Schema(
     paymentMethod: { 
       type: String, 
       required: true, 
-      enum: ['stripe', 'paypal', 'bank_transfer'] 
+      enum: ['lemonsqueezy', 'stripe', 'paypal', 'bank_transfer'] 
     },
+    // Lemon Squeezy specific fields
+    lemonSqueezyOrderId: { type: String },
+    lemonSqueezyCheckoutId: { type: String },
+    lemonSqueezyCustomerId: { type: String },
+    // Stripe specific fields (legacy)
     stripePaymentIntentId: { type: String },
     stripeSessionId: { type: String },
     transactionId: { type: String },
@@ -67,6 +78,8 @@ const PaymentSchema: Schema = new Schema(
 // Index for efficient queries
 PaymentSchema.index({ userId: 1, status: 1 })
 PaymentSchema.index({ jobId: 1 })
+PaymentSchema.index({ lemonSqueezyOrderId: 1 })
+PaymentSchema.index({ lemonSqueezyCheckoutId: 1 })
 PaymentSchema.index({ stripePaymentIntentId: 1 })
 PaymentSchema.index({ stripeSessionId: 1 })
 

@@ -34,64 +34,23 @@ export default function RoleBasedNav() {
         ) : (
           <div className="flex items-center gap-3">
             {/* Role-based navigation links */}
-            {role === 'candidate' && (
-              <>
-                <Link
-                  href="/candidate/dashboard"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  href="/jobs"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Briefcase className="h-4 w-4" />
-                  Find Jobs
-                </Link>
-                <Link
-                  href="/candidate/applications"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <FileText className="h-4 w-4" />
-                  Applications
-                </Link>
-              </>
-            )}
-            
-            {role === 'employer' && (
-              <>
-                <Link
-                  href="/employer/dashboard"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  href="/employer/post-job"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Plus className="h-4 w-4" />
-                  Post Job
-                </Link>
-                <Link
-                  href="/employer/candidates"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Users className="h-4 w-4" />
-                  Candidates
-                </Link>
-                <Link
-                  href="/employer/settings"
-                  className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </>
-            )}
+             {role === 'candidate' && (
+               <Link
+                 href="/candidate/dashboard"
+                 className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+               >
+                 Dashboard
+               </Link>
+             )}
+             
+             {role === 'employer' && (
+               <Link
+                 href="/employer/dashboard"
+                 className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+               >
+                 Dashboard
+               </Link>
+             )}
             
             {/* User profile button */}
             <UserButton 

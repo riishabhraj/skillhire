@@ -27,6 +27,7 @@ export default function PostJobPage() {
   const [jobData, setJobData] = useState({
     title: "",
     companyName: "",
+    companyLogo: "",
     description: "",
     requirements: [] as string[],
     preferredSkills: [] as string[],
@@ -67,6 +68,11 @@ export default function PostJobPage() {
   const [newPreferredSkill, setNewPreferredSkill] = useState("")
   const [newBenefit, setNewBenefit] = useState("")
   const [newTag, setNewTag] = useState("")
+  
+  // Logo upload state
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string>("")
+  const [logoUploading, setLogoUploading] = useState(false)
 
   const steps = [
     { id: 0, title: "Job Details", icon: Briefcase },
@@ -75,6 +81,73 @@ export default function PostJobPage() {
     { id: 3, title: "Review", icon: Clock },
     { id: 4, title: "Payment", icon: CreditCard }
   ]
+
+  // Logo upload functions
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file')
+        return
+      }
+      
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB')
+        return
+      }
+      
+      setLogoFile(file)
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setLogoPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const uploadLogo = async (): Promise<string | null> => {
+    if (!logoFile) return null
+    
+    setLogoUploading(true)
+    try {
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onload = (e) => resolve(e.target?.result as string)
+        reader.readAsDataURL(logoFile)
+      })
+      
+      const base64Data = await base64Promise
+      const fileName = `${jobData.companyName.replace(/\s+/g, '-').toLowerCase()}-logo.${logoFile.name.split('.').pop()}`
+      
+      const response = await fetch('/api/upload/logo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          base64Data,
+          fileName
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to upload logo')
+      }
+      
+      const { logoUrl } = await response.json()
+      return logoUrl
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      setError('Failed to upload logo')
+      return null
+    } finally {
+      setLogoUploading(false)
+    }
+  }
 
   const handleNext = () => {
     // Validate current step before proceeding
@@ -171,6 +244,17 @@ export default function PostJobPage() {
     setError(null)
 
     try {
+      // Upload logo first if provided (allowed for all plans)
+      let logoUrl = jobData.companyLogo
+      if (logoFile) {
+        const uploadedLogoUrl = await uploadLogo()
+        if (!uploadedLogoUrl) {
+          setLoading(false)
+          return
+        }
+        logoUrl = uploadedLogoUrl
+      }
+
       const response = await fetch('/api/jobs', {
         method: 'POST',
         headers: {
@@ -178,6 +262,7 @@ export default function PostJobPage() {
         },
         body: JSON.stringify({
           ...jobData,
+          companyLogo: logoUrl,
           companyId: userData.id,
           planType: selectedPlan,
           paymentStatus: 'pending'
@@ -282,6 +367,47 @@ export default function PostJobPage() {
                     onChange={(e) => setJobData(prev => ({ ...prev, companyName: e.target.value }))}
                   />
                 </div>
+              </div>
+
+              {/* Company Logo Upload */}
+              <div className="space-y-2">
+                <Label htmlFor="companyLogo">
+                  Company Logo {selectedPlan === 'premium' ? '(Will be displayed)' : '(Premium plan required for display)'}
+                </Label>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Input
+                      id="companyLogo"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/80"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Upload a company logo (PNG, JPG, GIF - Max 5MB)
+                      {selectedPlan === 'basic' && (
+                        <span className="block text-amber-600 font-medium">
+                          Logo will be stored but only displayed with Premium plan
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {logoPreview && (
+                    <div className="flex-shrink-0">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="w-16 h-16 rounded-lg object-contain border"
+                      />
+                    </div>
+                  )}
+                </div>
+                {logoUploading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Uploading logo...
+                  </div>
+                )}
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -693,9 +819,22 @@ export default function PostJobPage() {
 
               <div className="space-y-4">
                 <div className="p-4 border rounded-lg">
-                  <h3 className="font-semibold text-lg">{jobData.title}</h3>
-                  <p className="text-muted-foreground">{jobData.companyName}</p>
-                  <p className="text-sm text-muted-foreground">{jobData.category}</p>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">{jobData.title}</h3>
+                      <p className="text-muted-foreground">{jobData.companyName}</p>
+                      <p className="text-sm text-muted-foreground">{jobData.category}</p>
+                    </div>
+                    {(logoPreview || jobData.companyLogo) && (
+                      <div className="flex-shrink-0">
+                        <img
+                          src={logoPreview || jobData.companyLogo}
+                          alt="Company logo"
+                          className="w-16 h-16 rounded-lg object-contain border"
+                        />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />

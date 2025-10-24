@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Search, MapPin, Briefcase, DollarSign, Clock, Users, Filter } from "lucide-react"
+import { Loader2, Search, MapPin, Briefcase, DollarSign, Clock, Filter, Building2 } from "lucide-react"
 
 interface Job {
   _id: string
   id?: string
   title: string
   companyName: string
+  companyLogo?: string
   description: string
   location: string
   remote: boolean
@@ -27,9 +28,11 @@ interface Job {
   category: string
   tags: string[]
   postedAt: string
-  totalApplications: number
   useCareerSite: boolean
   careerSiteUrl?: string
+  isFeatured?: boolean // true for employer-posted jobs from our platform
+  source?: 'platform' | 'remoteok' // track job source
+  planType?: 'basic' | 'premium' // plan type for platform jobs
 }
 
 export default function JobsPage() {
@@ -45,35 +48,141 @@ export default function JobsPage() {
   const [category, setCategory] = useState("all")
   const [remote, setRemote] = useState("all")
   const [jobType, setJobType] = useState("all")
+  const [allJobs, setAllJobs] = useState<Job[]>([]) // Store all jobs for client-side filtering
 
+  // Fetch jobs only once on component mount
   useEffect(() => {
     fetchJobs()
-  }, [page, search, category, remote, jobType])
+  }, [])
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setPage(1)
+  }, [search, category, remote, jobType])
+
+  // Apply client-side filtering and pagination
+  useEffect(() => {
+    if (allJobs.length === 0) return
+
+    // Apply filters
+    let filteredJobs = allJobs
+
+    if (search) {
+      const searchLower = search.toLowerCase()
+      filteredJobs = filteredJobs.filter((job: any) => 
+        job.title.toLowerCase().includes(searchLower) ||
+        job.companyName.toLowerCase().includes(searchLower) ||
+        job.tags.some((tag: string) => tag.toLowerCase().includes(searchLower))
+      )
+    }
+
+    if (category && category !== 'all') {
+      filteredJobs = filteredJobs.filter((job: any) => 
+        job.category.toLowerCase() === category.toLowerCase() ||
+        job.tags.some((tag: string) => tag.toLowerCase().includes(category.toLowerCase()))
+      )
+    }
+
+    if (remote && remote !== 'all') {
+      filteredJobs = filteredJobs.filter((job: any) => 
+        remote === 'true' ? job.remote : !job.remote
+      )
+    }
+
+    if (jobType && jobType !== 'all') {
+      filteredJobs = filteredJobs.filter((job: any) => 
+        job.jobType.toLowerCase() === jobType.toLowerCase()
+      )
+    }
+
+    // Pagination
+    const limit = 12
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedJobs = filteredJobs.slice(startIndex, endIndex)
+
+    setJobs(paginatedJobs)
+    setTotalPages(Math.ceil(filteredJobs.length / limit))
+    setHasMore(endIndex < filteredJobs.length)
+  }, [allJobs, search, category, remote, jobType, page])
 
   const fetchJobs = async () => {
     try {
       setLoading(true)
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '12'
-      })
-
-      if (search) params.append('search', search)
-      if (category && category !== 'all') params.append('category', category)
-      if (remote && remote !== 'all') params.append('remote', remote)
-      if (jobType && jobType !== 'all') params.append('jobType', jobType)
-
-      const response = await fetch(`/api/jobs?${params}`)
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch jobs')
+      // Fetch from both sources in parallel
+      const [remoteOKResponse, platformResponse] = await Promise.all([
+        fetch('https://remoteok.com/api?ref=skillhire').catch(() => null),
+        fetch('/api/jobs').catch(() => null)
+      ])
+      
+      let allJobs: Job[] = []
+
+      // Fetch from our platform (employer-posted jobs)
+      if (platformResponse && platformResponse.ok) {
+        const platformData = await platformResponse.json()
+        const platformJobs = (platformData.jobs || []).map((job: any) => ({
+          _id: job._id,
+          title: job.title,
+          companyName: job.companyName,
+          companyLogo: job.companyLogo,
+          description: job.description,
+          location: job.location,
+          remote: job.remote,
+          jobType: job.jobType,
+          salary: job.salary,
+          category: job.category,
+          tags: job.skills || [],
+          postedAt: job.postedAt,
+          useCareerSite: job.useCareerSite || false,
+          careerSiteUrl: job.careerSiteUrl,
+          isFeatured: true,
+          source: 'platform' as const
+        }))
+        allJobs = [...platformJobs]
       }
 
-      const data = await response.json()
-      setJobs(data.jobs || [])
-      setTotalPages(data.pagination?.pages || 1)
-      setHasMore(page < (data.pagination?.pages || 1))
+      // Fetch from RemoteOK API
+      if (remoteOKResponse && remoteOKResponse.ok) {
+        const data = await remoteOKResponse.json()
+        
+        // RemoteOK returns an array where first item is metadata, rest are jobs
+        const remoteJobs = data.slice(1).map((job: any) => ({
+          _id: `remoteok-${job.id || job.slug}`,
+          title: job.position,
+          companyName: job.company,
+          companyLogo: job.logo || job.company_logo || `https://logo.clearbit.com/${job.company.toLowerCase().replace(/\s+/g, '')}.com`,
+          description: job.description || '',
+          location: job.location || 'Worldwide',
+          remote: true,
+          jobType: 'full-time',
+          salary: {
+            min: 0,
+            max: 0,
+            currency: 'USD'
+          },
+          category: job.tags?.[0] || 'other',
+          tags: job.tags || [],
+          postedAt: job.date || new Date().toISOString(),
+          useCareerSite: true,
+          careerSiteUrl: job.url,
+          isFeatured: false,
+          source: 'remoteok' as const
+        }))
+        allJobs = [...allJobs, ...remoteJobs]
+      }
+
+      // Sort: Featured jobs first, then by date
+      allJobs.sort((a, b) => {
+        if (a.isFeatured && !b.isFeatured) return -1
+        if (!a.isFeatured && b.isFeatured) return 1
+        return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+      })
+
+      // Store all jobs for client-side filtering
+      setAllJobs(allJobs)
     } catch (err) {
+      console.error('Error fetching jobs:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
@@ -123,8 +232,8 @@ export default function JobsPage() {
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold mb-4">Find Your Next Opportunity</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Discover amazing remote job opportunities from companies worldwide. 
-          Showcase your projects and get evaluated on your real skills.
+          Discover amazing job opportunities from top companies worldwide. 
+          Featured jobs let you showcase your projects and get evaluated on your real skills.
         </p>
       </div>
 
@@ -208,7 +317,7 @@ export default function JobsPage() {
       {/* Jobs Grid */}
       {jobs.length === 0 && !loading ? (
         <div className="text-center py-12">
-          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-medium mb-2">No jobs found</h3>
           <p className="text-muted-foreground">
             Try adjusting your search criteria or check back later for new opportunities.
@@ -218,54 +327,128 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {jobs.map((job) => (
             <Card key={job._id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg leading-tight mb-2">
-                      <Link 
-                        href={`/jobs/${job._id}`}
-                        className="hover:text-primary transition-colors"
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <div className="mb-2">
+                      <CardTitle className="text-lg leading-tight mb-1">
+                        <Link 
+                          href={job.isFeatured ? `/jobs/${job._id}` : job.careerSiteUrl || '#'}
+                          className="hover:text-primary transition-colors block overflow-hidden"
+                          target={job.isFeatured ? '_self' : '_blank'}
+                          rel={job.isFeatured ? undefined : 'noopener noreferrer'}
+                          style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }}
+                        >
+                          {job.title}
+                        </Link>
+                      </CardTitle>
+                      {job.isFeatured && (
+                        <Badge className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 text-xs">
+                          ⭐ Featured
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Building2 className="h-4 w-4 flex-shrink-0" />
+                      <span 
+                        className="overflow-hidden"
+                        style={{
+                          display: '-webkit-box',
+                          WebkitLineClamp: 1,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
                       >
-                        {job.title}
-                      </Link>
-                    </CardTitle>
-                    <p className="text-sm text-muted-foreground">{job.companyName}</p>
+                        {job.companyName}
+                      </span>
+                    </div>
                   </div>
-                  <Badge variant="outline">{job.category}</Badge>
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    {job.companyLogo && job.planType === 'premium' && (
+                      <img 
+                        src={job.companyLogo} 
+                        alt={`${job.companyName} logo`}
+                        className="w-12 h-12 rounded-lg object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
+                    )}
+                    <Badge variant="outline" className="text-xs whitespace-nowrap">
+                      {job.category}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-4 w-4" />
-                    {job.remote ? 'Remote' : job.location}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Briefcase className="h-4 w-4" />
-                    {job.jobType}
-                  </span>
+              <CardContent className="space-y-3">
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span 
+                      className="overflow-hidden"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {job.remote ? 'Remote' : job.location}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <Briefcase className="h-4 w-4 flex-shrink-0" />
+                    <span 
+                      className="overflow-hidden"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {job.jobType}
+                    </span>
+                  </div>
                 </div>
                 
                 {job.salary.min > 0 && (
-                  <div className="flex items-center gap-1 text-sm text-green-600">
-                    <DollarSign className="h-4 w-4" />
-                    <span>
+                  <div className="flex items-center gap-1 text-sm text-green-600 min-w-0">
+                    <DollarSign className="h-4 w-4 flex-shrink-0" />
+                    <span 
+                      className="overflow-hidden"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
                       ${job.salary.min.toLocaleString()} - ${job.salary.max.toLocaleString()}
                     </span>
                   </div>
                 )}
                 
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {new Date(job.postedAt).toLocaleDateString()}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    {job.totalApplications} applications
-                  </span>
-                </div>
+                {/* Only show date for platform jobs */}
+                {job.isFeatured && (
+                  <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 flex-shrink-0" />
+                      <span>{new Date(job.postedAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                )}
                 
                 {job.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
@@ -283,22 +466,24 @@ export default function JobsPage() {
                 )}
                 
                 <div className="flex gap-2">
-                  <Button asChild className="flex-1">
-                    <Link href={`/jobs/${job._id}`}>
-                      View Details
-                    </Link>
-                  </Button>
-                  {job.useCareerSite ? (
-                    <Button asChild variant="outline" onClick={() => window.open(job.careerSiteUrl, '_blank')}>
-                      <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
-                        Apply on Company Site
-                      </a>
-                    </Button>
+                  {job.isFeatured ? (
+                    <>
+                      <Button asChild className="flex-1">
+                        <Link href={`/jobs/${job._id}`}>
+                          View Details
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <Link href={`/candidate/apply/${job._id}`}>
+                          Apply Now
+                        </Link>
+                      </Button>
+                    </>
                   ) : (
-                    <Button asChild variant="outline">
-                      <Link href={`/candidate/apply/${job._id}`}>
-                        Apply Now
-                      </Link>
+                    <Button asChild className="flex-1">
+                      <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
+                        View & Apply
+                      </a>
                     </Button>
                   )}
                 </div>

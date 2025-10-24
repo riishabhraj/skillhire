@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, MapPin, Building2, Clock, Search } from "lucide-react"
+import { ExternalLink, MapPin, Building2, Clock, Search, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface RemoteJob {
   id: number
@@ -26,6 +26,8 @@ export function RemoteJobsList() {
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const jobsPerPage = 12
 
   useEffect(() => {
     const fetchJobs = async () => {
@@ -60,6 +62,17 @@ export function RemoteJobsList() {
 
   // Get unique categories for filter dropdown
   const categories = Array.from(new Set(jobs.map(job => job.category))).sort()
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage)
+  const startIndex = (currentPage - 1) * jobsPerPage
+  const endIndex = startIndex + jobsPerPage
+  const currentJobs = filteredJobs.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
 
   if (loading) {
     return (
@@ -114,7 +127,7 @@ export function RemoteJobsList() {
         
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
-            Showing {filteredJobs.length} of {jobs.length} jobs
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredJobs.length)} of {filteredJobs.length} jobs
           </p>
         </div>
       </div>
@@ -128,37 +141,73 @@ export function RemoteJobsList() {
       
       {/* Jobs Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredJobs.map((job) => (
+        {currentJobs.map((job) => (
           <Card key={job.id} className="hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg leading-tight mb-2 line-clamp-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <CardTitle 
+                    className="text-lg leading-tight mb-2"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     {job.title}
                   </CardTitle>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Building2 className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">{job.company_name}</span>
+                    <span 
+                      className="overflow-hidden"
+                      style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      {job.company_name}
+                    </span>
                   </div>
                 </div>
-                {job.company_logo && (
-                  <img 
-                    src={job.company_logo} 
-                    alt={`${job.company_name} logo`}
-                    className="w-12 h-12 rounded-lg object-contain flex-shrink-0"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
-                    }}
-                  />
-                )}
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  {job.company_logo && (
+                    <img 
+                      src={job.company_logo} 
+                      alt={`${job.company_name} logo`}
+                      className="w-12 h-12 rounded-lg object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  )}
+                  <Badge variant="outline" className="text-xs whitespace-nowrap">
+                    {job.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             
             <CardContent className="pt-0">
               <div className="space-y-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
                   <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">{job.candidate_required_location}</span>
+                  <span 
+                    className="overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
+                    {job.candidate_required_location}
+                  </span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -167,22 +216,37 @@ export function RemoteJobsList() {
                 </div>
                 
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {job.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </Badge>
                   <Badge variant="outline" className="text-xs">
                     {job.job_type}
                   </Badge>
                 </div>
                 
                 {job.salary && (
-                  <p className="text-sm font-medium text-green-600">
+                  <p 
+                    className="text-sm font-medium text-green-600 overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 1,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     {job.salary}
                   </p>
                 )}
                 
                 {job.description && (
-                  <div className="text-sm text-muted-foreground line-clamp-2">
+                  <div 
+                    className="text-sm text-muted-foreground overflow-hidden"
+                    style={{
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                  >
                     {job.description.replace(/<[^>]*>/g, '').substring(0, 100)}...
                   </div>
                 )}
@@ -228,6 +292,61 @@ export function RemoteJobsList() {
               Clear Filters
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {filteredJobs.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-8">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Previous
+          </Button>
+
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Show first page, last page, current page, and pages around current
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className="min-w-[2.5rem]"
+                  >
+                    {page}
+                  </Button>
+                )
+              } else if (page === currentPage - 2 || page === currentPage + 2) {
+                return (
+                  <span key={page} className="px-2 text-muted-foreground">
+                    ...
+                  </span>
+                )
+              }
+              return null
+            })}
+          </div>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-1" />
+          </Button>
         </div>
       )}
     </div>

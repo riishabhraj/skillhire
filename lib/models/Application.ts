@@ -96,7 +96,8 @@ const ApplicationSchema = new Schema<IApplication>({
   },
   coverLetter: {
     type: String,
-    required: true
+    required: false,
+    default: ''
   },
   resume: {
     type: String,

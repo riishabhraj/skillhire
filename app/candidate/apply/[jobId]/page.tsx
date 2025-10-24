@@ -57,7 +57,6 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
 
   // Application form data
   const [applicationData, setApplicationData] = useState({
-    coverLetter: "",
     projects: [] as Array<{
       id: string
       title: string
@@ -165,6 +164,11 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
         scale: "medium",
         features: []
       })
+      // Clear all input fields
+      setNewTech("")
+      setNewChallenge("")
+      setNewAchievement("")
+      setNewFeature("")
     }
   }
 
@@ -232,11 +236,6 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
       return
     }
 
-    if (!applicationData.coverLetter.trim()) {
-      setError('Please write a cover letter')
-      return
-    }
-
     if (applicationData.projects.length === 0) {
       setError('Please add at least one project to your application')
       return
@@ -249,7 +248,7 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
       const requestData = {
         jobId: job._id,
         candidateId: userData.id,
-        coverLetter: applicationData.coverLetter,
+        coverLetter: '', // No cover letter needed
         projects: applicationData.projects,
         skills: applicationData.skills,
         experience: applicationData.experience
@@ -321,7 +320,7 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
       {/* Job Details */}
       <Card>
         <CardHeader>
@@ -402,18 +401,6 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-
-          {/* Cover Letter */}
-          <div className="space-y-2">
-            <Label htmlFor="coverLetter">Cover Letter</Label>
-            <Textarea
-              id="coverLetter"
-              placeholder="Tell us why you're interested in this position and what makes you a great fit..."
-              rows={4}
-              value={applicationData.coverLetter}
-              onChange={(e) => setApplicationData(prev => ({ ...prev, coverLetter: e.target.value }))}
-            />
-          </div>
 
           {/* Skills Section */}
           <div className="space-y-4">

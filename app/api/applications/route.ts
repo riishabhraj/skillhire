@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     const { jobId, candidateId, coverLetter, projects, skills, experience } = body
 
 
-    if (!jobId || !coverLetter || !projects || projects.length === 0) {
+    if (!jobId || !projects || projects.length === 0) {
       return NextResponse.json(
-        { error: 'Job ID, cover letter, and at least one project are required' },
+        { error: 'Job ID and at least one project are required' },
         { status: 400 }
       )
     }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     const newApplication = new Application({
       candidateId: candidateId || userId,
       jobId,
-      coverLetter,
+      coverLetter: coverLetter || '', // Cover letter is optional
       projects,
       skills: skills || { technical: [], soft: [] },
       experience: experience || { totalYears: 0, relevantYears: 0, previousRoles: [] },
@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
         minimumProjectScore: 70,
         enableAIAnalysis: true,
         githubIntegration: {
-          enabled: false,
+          enabled: true,
+          token: process.env.GITHUB_TOKEN || '',
           minimumStars: 0,
           minimumCommits: 0,
           minimumRepositoryAge: 0,
