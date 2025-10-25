@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Plus, X, Briefcase, MapPin, DollarSign, Clock, Code, Star, Users, CheckCircle } from "lucide-react"
+import RoleGuard from "@/components/role-guard"
 
 interface Job {
   _id: string
@@ -45,12 +46,13 @@ interface Job {
   }
 }
 
-export default function ApplyToJobPage({ params }: { params: { jobId: string } }) {
+function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [jobId, setJobId] = useState<string | null>(null)
   const [newSkill, setNewSkill] = useState("")
   const { userData, isLoaded } = useUserData()
   const router = useRouter()
@@ -121,12 +123,24 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
   const [newFeature, setNewFeature] = useState("")
 
   useEffect(() => {
-    fetchJob()
-  }, [params.jobId])
+    const getParams = async () => {
+      const resolvedParams = await params
+      setJobId(resolvedParams.jobId)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (jobId) {
+      fetchJob()
+    }
+  }, [jobId])
 
   const fetchJob = async () => {
+    if (!jobId) return
+    
     try {
-      const response = await fetch(`/api/jobs/${params.jobId}`)
+      const response = await fetch(`/api/jobs/${jobId}`)
       if (!response.ok) {
         throw new Error('Job not found')
       }
@@ -660,5 +674,13 @@ export default function ApplyToJobPage({ params }: { params: { jobId: string } }
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function ApplyToJobPageWithRoleGuard({ params }: { params: Promise<{ jobId: string }> }) {
+  return (
+    <RoleGuard allowedRoles={['candidate']}>
+      <ApplyToJobPage params={params} />
+    </RoleGuard>
   )
 }

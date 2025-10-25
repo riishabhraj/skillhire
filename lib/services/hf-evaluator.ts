@@ -14,9 +14,10 @@ export class HFEvaluatorService {
   private model: string
 
   constructor(model?: string, token?: string) {
-    this.model = model || process.env.HF_MODEL || 'google/flan-t5-large'
+    this.model = model || process.env.HF_MODEL || 'microsoft/DialoGPT-medium'
     this.endpoint = `https://api-inference.huggingface.co/models/${this.model}`
     this.token = token || process.env.HF_TOKEN
+    console.log('HF Model configured:', this.model)
   }
 
   isConfigured() {
@@ -61,11 +62,13 @@ export class HFEvaluatorService {
       const data = await res.json()
       console.log('HF API response:', data)
       const text: string = Array.isArray(data) ? data[0]?.generated_text ?? '' : data?.generated_text ?? ''
+      console.log('HF extracted text:', text)
       const json = this.extractJson(text)
       if (!json) {
         console.log('Failed to extract JSON from HF response:', text)
         return null
       }
+      console.log('HF parsed JSON:', json)
 
       console.log('HF evaluation successful:', json)
       return {
@@ -100,9 +103,17 @@ export class HFEvaluatorService {
   }
 
   private buildPrompt({ job, candidate, projects }: { job: any; candidate: any; projects: any[] }) {
+    console.log('HF Debug - Candidate object:', candidate)
+    console.log('HF Debug - Candidate skills:', candidate?.skills)
+    console.log('HF Debug - Technical skills:', candidate?.skills?.technical)
+    
+    // Handle both Mongoose document and plain object formats
+    const candidateSkills = candidate?.skills || candidate?._doc?.skills || { technical: [], soft: [] }
+    console.log('HF Debug - Resolved skills:', candidateSkills)
+    
     const jobReq = `Title: ${job?.title}\nDescription: ${job?.description}\nRequired skills: ${(job?.requiredSkills || []).join(', ')}\nPreferred skills: ${(job?.preferredSkills || []).join(', ')}`
     const projLines = projects.map((p, i) => `#${i + 1} ${p.title || p.githubUrl || 'Project'}\nTech: ${(p.actualTechnologies || p.technologies || []).join(', ')}\nCommits: ${p.commitCount ?? p.totalCommits ?? 'n/a'}\nStars: ${p.stars ?? 'n/a'}\nLast Activity: ${p.lastActivity ?? 'n/a'}\nComplexity: ${p.projectComplexity ?? p.complexity ?? 'n/a'}\nSummary: ${p.description || ''}`).join('\n\n')
-    const skills = `Technical: ${(candidate?.skills?.technical || []).map((s: any) => s.name || s).join(', ')}\nSoft: ${(candidate?.skills?.soft || []).map((s: any) => s.name || s).join(', ')}`
+    const skills = `Technical: ${(candidateSkills?.technical || []).map((s: any) => s.name || s).join(', ')}\nSoft: ${(candidateSkills?.soft || []).map((s: any) => s.name || s).join(', ')}`
     const exp = `Total years: ${candidate?.experience?.totalYears ?? 'n/a'}\nRelevant years: ${candidate?.experience?.relevantYears ?? 'n/a'}`
 
     return `You are a technical recruiter. Score a candidate for the job using this strict rubric. Return ONLY valid JSON object with fields: {"projectScore":0-100, "skillsScore":0-100, "experienceScore":0-100, "overallScore":0-100, "feedback":"short note"}.

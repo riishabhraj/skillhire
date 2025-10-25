@@ -46,13 +46,29 @@ export default function EmployerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activatingJobId, setActivatingJobId] = useState<string | null>(null)
+  const [freeJobsRemaining, setFreeJobsRemaining] = useState(0)
+  const [isEligibleForFree, setIsEligibleForFree] = useState(false)
   const { userData, isLoaded } = useUserData()
 
   useEffect(() => {
     if (isLoaded && userData) {
       fetchDashboardData()
+      fetchFreeJobsCount()
     }
   }, [isLoaded, userData])
+
+  const fetchFreeJobsCount = async () => {
+    try {
+      const response = await fetch('/api/employer/free-jobs-count')
+      if (response.ok) {
+        const data = await response.json()
+        setFreeJobsRemaining(data.freeJobsRemaining)
+        setIsEligibleForFree(data.isEligibleForFree)
+      }
+    } catch (error) {
+      console.error('Error fetching free jobs count:', error)
+    }
+  }
 
   const fetchDashboardData = async () => {
     try {
@@ -200,6 +216,22 @@ export default function EmployerDashboardPage() {
               </p>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Free Jobs Counter */}
+      {isEligibleForFree && (
+        <div className="mb-8">
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-green-600 text-lg">🎉</span>
+              <h3 className="text-green-800 font-medium">Free Job Posts Available!</h3>
+            </div>
+            <p className="text-green-700 text-sm">
+              You have <span className="font-semibold">{freeJobsRemaining} free job posts</span> remaining. 
+              After that, jobs will cost $99 (Basic) or $128 (Premium).
+            </p>
+          </div>
         </div>
       )}
 

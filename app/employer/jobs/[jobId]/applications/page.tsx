@@ -254,14 +254,6 @@ export default function JobApplicationsPage() {
               </CardHeader>
               
               <CardContent className="space-y-4">
-                {/* Cover Letter Preview */}
-                <div>
-                  <h4 className="font-medium mb-2">Cover Letter</h4>
-                  <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg line-clamp-3">
-                    {application.coverLetter}
-                  </p>
-                </div>
-
                 {/* Projects Summary */}
                 {application.projects.length > 0 && (
                   <div>

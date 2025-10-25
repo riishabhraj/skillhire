@@ -76,9 +76,11 @@ export interface IApplication extends Document {
   greenhouseStatus?: string
   
   status: 'submitted' | 'under_review' | 'shortlisted' | 'interview' | 'rejected' | 'hired'
+  internalStatus?: 'submitted' | 'under_review' | 'shortlisted' | 'interview' | 'rejected' | 'hired'
   submittedAt: Date
   reviewedAt?: Date
   shortlistedAt?: Date
+  evaluationVisibleAt?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -207,12 +209,17 @@ const ApplicationSchema = new Schema<IApplication>({
     enum: ['submitted', 'under_review', 'shortlisted', 'interview', 'rejected', 'hired'],
     default: 'submitted'
   },
+  internalStatus: {
+    type: String,
+    enum: ['submitted', 'under_review', 'shortlisted', 'interview', 'rejected', 'hired']
+  },
   submittedAt: {
     type: Date,
     default: Date.now
   },
   reviewedAt: Date,
-  shortlistedAt: Date
+  shortlistedAt: Date,
+  evaluationVisibleAt: Date
 }, {
   timestamps: true
 })

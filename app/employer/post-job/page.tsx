@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useUserData } from "@/hooks/use-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,8 +20,30 @@ export default function PostJobPage() {
   const [error, setError] = useState<string | null>(null)
   const [createdJobId, setCreatedJobId] = useState<string | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium'>('basic')
+  const [freeJobsRemaining, setFreeJobsRemaining] = useState(0)
+  const [isEligibleForFree, setIsEligibleForFree] = useState(false)
   const { userData, isLoaded } = useUserData()
   const router = useRouter()
+
+  // Fetch free jobs count on component mount
+  useEffect(() => {
+    if (isLoaded && userData) {
+      fetchFreeJobsCount()
+    }
+  }, [isLoaded, userData])
+
+  const fetchFreeJobsCount = async () => {
+    try {
+      const response = await fetch('/api/employer/free-jobs-count')
+      if (response.ok) {
+        const data = await response.json()
+        setFreeJobsRemaining(data.freeJobsRemaining)
+        setIsEligibleForFree(data.isEligibleForFree)
+      }
+    } catch (error) {
+      console.error('Error fetching free jobs count:', error)
+    }
+  }
 
   // Job form data
   const [jobData, setJobData] = useState({
@@ -276,7 +298,14 @@ export default function PostJobPage() {
 
       const result = await response.json()
       setCreatedJobId(result.job._id)
-      setStep(4) // Move to payment step
+      
+      if (result.isFreeJob) {
+        // Free job - skip payment and go directly to success
+        router.push('/employer/dashboard')
+      } else {
+        // Paid job - go to payment step
+        setStep(4)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
@@ -910,10 +939,27 @@ export default function PostJobPage() {
 
           {step === 4 && (
             <div className="space-y-6">
+              {/* Free Jobs Counter */}
+              {isEligibleForFree && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-green-600 text-lg">🎉</span>
+                    <h4 className="text-green-800 font-medium">Free Job Posts Available!</h4>
+                  </div>
+                  <p className="text-green-700 text-sm">
+                    You have <span className="font-semibold">{freeJobsRemaining} free job posts</span> remaining. 
+                    After that, jobs will cost $99 (Basic) or $128 (Premium).
+                  </p>
+                </div>
+              )}
+
               <div>
                 <h4 className="text-sm font-medium mb-2">Choose Your Plan</h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Select a plan to publish your job posting.
+                  {isEligibleForFree 
+                    ? "Your next job will be free! Select a plan for future jobs or to upgrade features."
+                    : "Select a plan to publish your job posting."
+                  }
                 </p>
               </div>
 
@@ -930,8 +976,19 @@ export default function PostJobPage() {
                   <div className="text-center">
                     <h5 className="text-lg font-semibold text-foreground mb-2">Basic</h5>
                     <div className="mb-4">
-                      <span className="text-3xl font-bold text-foreground">$99</span>
-                      <span className="text-muted-foreground">/job</span>
+                      {isEligibleForFree ? (
+                        <>
+                          <span className="text-3xl font-bold text-green-600">FREE</span>
+                          <div className="text-sm text-muted-foreground">
+                            <span className="line-through">$99</span> /job
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-bold text-foreground">$99</span>
+                          <span className="text-muted-foreground">/job</span>
+                        </>
+                      )}
                     </div>
                     <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">
@@ -971,8 +1028,19 @@ export default function PostJobPage() {
                   <div className="text-center">
                     <h5 className="text-lg font-semibold text-foreground mb-2">Premium</h5>
                     <div className="mb-4">
-                      <span className="text-3xl font-bold text-foreground">$128</span>
-                      <span className="text-muted-foreground">/job</span>
+                      {isEligibleForFree ? (
+                        <>
+                          <span className="text-3xl font-bold text-green-600">FREE</span>
+                          <div className="text-sm text-muted-foreground">
+                            <span className="line-through">$128</span> /job
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-3xl font-bold text-foreground">$128</span>
+                          <span className="text-muted-foreground">/job</span>
+                        </>
+                      )}
                     </div>
                     <ul className="space-y-2 text-sm text-muted-foreground mb-6">
                       <li className="flex items-center gap-2">

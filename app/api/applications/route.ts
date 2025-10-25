@@ -7,6 +7,8 @@ import EvaluationSettings from '@/lib/models/EvaluationSettings'
 import { CandidateEvaluationService } from '@/lib/services/candidate-evaluation'
 import { HFEvaluatorService } from '@/lib/services/hf-evaluator'
 import { GitHubEnhancementService } from '@/lib/services/github-enhancement'
+import { isEvaluationVisible, getCandidateStatus, getCandidateEvaluation, getTimeUntilVisible } from '@/lib/utils/evaluation-visibility'
+import User from '@/lib/models/User'
 
 // POST /api/applications - Create new application
 export async function POST(request: NextRequest) {
@@ -17,18 +19,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await connectDB()
+
+    // Check user role - only candidates can apply for jobs
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    if (user.role !== 'candidate') {
+      return NextResponse.json(
+        { error: 'Only candidates can apply for jobs. Employers cannot apply for positions.' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { jobId, candidateId, coverLetter, projects, skills, experience } = body
 
-
+    // Validate required fields
     if (!jobId || !projects || projects.length === 0) {
       return NextResponse.json(
         { error: 'Job ID and at least one project are required' },
         { status: 400 }
       )
     }
-
-    await connectDB()
 
     // Check if job exists
     const job = await Job.findById(jobId)
@@ -49,6 +64,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Debug: Log skills data
+    console.log('Skills data received:', JSON.stringify(skills, null, 2))
+    console.log('Technical skills:', skills?.technical)
+
     // Create new application
     const newApplication = new Application({
       candidateId: candidateId || userId,
@@ -62,6 +81,9 @@ export async function POST(request: NextRequest) {
     })
 
     const savedApplication = await newApplication.save()
+    
+    // Debug: Log saved application to verify skills were saved
+    console.log('Saved application from DB:', JSON.stringify(savedApplication.skills, null, 2))
 
     // Update job application count
     job.totalApplications = (job.totalApplications || 0) + 1
@@ -94,16 +116,24 @@ export async function POST(request: NextRequest) {
 
     // Automatically evaluate the application
     try {
+      // Debug: Log saved application skills before enhancement
+      console.log('Saved application skills:', savedApplication.skills)
+      console.log('Saved application technical skills:', savedApplication.skills?.technical)
+      
       // Enhance projects with GitHub data if enabled
       let enhancedApplication = savedApplication
       if (settings.githubIntegration.enabled) {
         const githubService = new GitHubEnhancementService(settings.githubIntegration.token)
         const enhancedProjects = await githubService.enhanceProjectsWithGitHub(savedApplication.projects || [])
         enhancedApplication = {
-          ...savedApplication,
+          ...savedApplication.toObject(), // Convert Mongoose document to plain object
           projects: enhancedProjects
         }
       }
+      
+      // Debug: Log enhanced application skills
+      console.log('Enhanced application skills:', enhancedApplication.skills)
+      console.log('Enhanced application technical skills:', enhancedApplication.skills?.technical)
 
       const evaluationService = new CandidateEvaluationService()
       let evaluation = await evaluationService.evaluateCandidate(
@@ -132,14 +162,14 @@ export async function POST(request: NextRequest) {
               // Blend scores (70% rule, 30% LLM by default)
               const alpha = 0.3
               const blend = (a: number, b: number) => Math.round(a * (1 - alpha) + b * alpha)
-              evaluation.projectScore = blend(evaluation.projectScore, hfScores.projectScore)
-              evaluation.skillsScore = blend(evaluation.skillsScore, hfScores.skillsScore)
-              evaluation.experienceScore = blend(evaluation.experienceScore, hfScores.experienceScore)
-              evaluation.overallScore = blend(evaluation.overallScore, hfScores.overallScore)
+              evaluation.projectScore = blend(evaluation.projectScore, hfScores!.projectScore)
+              evaluation.skillsScore = blend(evaluation.skillsScore, hfScores!.skillsScore)
+              evaluation.experienceScore = blend(evaluation.experienceScore, hfScores!.experienceScore)
+              evaluation.overallScore = blend(evaluation.overallScore, hfScores!.overallScore)
               // Re-evaluate shortlist status with blended score
               evaluation.shortlistStatus = evaluation.overallScore >= Math.round(settings.minimumProjectScore) ? 'shortlisted' : evaluation.shortlistStatus
-              if (hfScores.feedback) {
-                evaluation.feedback = (evaluation.feedback ? evaluation.feedback + '\n' : '') + hfScores.feedback
+              if (hfScores!.feedback) {
+                evaluation.feedback = (evaluation.feedback ? evaluation.feedback + '\n' : '') + hfScores!.feedback
               }
             }
           }
@@ -149,10 +179,15 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update application with evaluation results
+      // Store evaluation results but don't immediately show to candidate
       savedApplication.evaluation = evaluation
-      savedApplication.status = evaluation.shortlistStatus === 'shortlisted' ? 'shortlisted' : 
-                                evaluation.shortlistStatus === 'rejected' ? 'rejected' : 'under_review'
+      savedApplication.status = 'under_review' // Always start as under_review for candidates
+      savedApplication.reviewedAt = new Date()
+      savedApplication.evaluationVisibleAt = new Date(Date.now() + 48 * 60 * 60 * 1000) // 48 hours from now
+      
+      // Store the actual status internally for employer reference
+      savedApplication.internalStatus = evaluation.shortlistStatus === 'shortlisted' ? 'shortlisted' : 
+                                       evaluation.shortlistStatus === 'rejected' ? 'rejected' : 'under_review'
       
       if (evaluation.shortlistStatus === 'shortlisted') {
         savedApplication.shortlistedAt = new Date()
@@ -160,7 +195,6 @@ export async function POST(request: NextRequest) {
         await job.save()
       }
       
-      savedApplication.reviewedAt = new Date()
       await savedApplication.save()
     } catch (evaluationError) {
       console.error('Error evaluating application:', evaluationError)
@@ -225,8 +259,28 @@ export async function GET(request: NextRequest) {
 
     const total = await Application.countDocuments(query)
 
+    // Check if this is a candidate viewing their own applications
+    const isCandidateView = !candidateId || candidateId === userId
+    
+    // Apply visibility logic for candidates
+    const processedApplications = applications.map(app => {
+      if (isCandidateView) {
+        // For candidates, apply visibility logic
+        const candidateApp = {
+          ...app.toObject(),
+          status: getCandidateStatus(app),
+          evaluation: getCandidateEvaluation(app),
+          timeUntilVisible: getTimeUntilVisible(app)
+        }
+        return candidateApp
+      } else {
+        // For employers, show full data
+        return app
+      }
+    })
+
     return NextResponse.json({
-      applications,
+      applications: processedApplications,
       pagination: {
         page,
         limit,

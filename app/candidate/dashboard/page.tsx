@@ -24,6 +24,7 @@ interface Application {
   }
   status: 'submitted' | 'under_review' | 'shortlisted' | 'interview' | 'rejected' | 'hired'
   submittedAt: string
+  timeUntilVisible?: number
   evaluation?: {
     overallScore: number
     projectScore: number
@@ -31,7 +32,7 @@ interface Application {
     skillsScore: number
     shortlistStatus: 'shortlisted' | 'under_review' | 'rejected'
     feedback: string
-  }
+  } | null
 }
 
 interface DashboardStats {
@@ -308,7 +309,7 @@ export default function CandidateDashboardPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  {application.evaluation && (
+                  {application.evaluation ? (
                     <div className="grid grid-cols-3 gap-4 text-sm">
                       <div className="text-center">
                         <div className="font-semibold text-lg">{application.evaluation.overallScore}/100</div>
@@ -321,6 +322,18 @@ export default function CandidateDashboardPage() {
                       <div className="text-center">
                         <div className="font-semibold text-lg">{application.evaluation.skillsScore}/100</div>
                         <div className="text-muted-foreground">Skills</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4">
+                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-sm">
+                          {application.timeUntilVisible && application.timeUntilVisible > 0 
+                            ? `Evaluation results will be available in ${application.timeUntilVisible} hours`
+                            : 'Evaluation in progress...'
+                          }
+                        </span>
                       </div>
                     </div>
                   )}

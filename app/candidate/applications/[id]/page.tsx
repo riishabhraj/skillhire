@@ -272,16 +272,6 @@ export default function ApplicationDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Cover Letter */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Cover Letter</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm whitespace-pre-wrap">{application.coverLetter}</p>
-            </CardContent>
-          </Card>
-
           {/* Projects */}
           <Card>
             <CardHeader>

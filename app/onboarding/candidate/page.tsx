@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { useUserData } from "@/hooks/use-user"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
-import { User, Code, MapPin, Briefcase, Star, Target } from "lucide-react"
+import { User, Code, MapPin, Briefcase, Star, Target, Upload, FileText, X } from "lucide-react"
 
-const CANDIDATE_STEPS = ["Profile", "Skills", "Experience", "Preferences"] as const
+const CANDIDATE_STEPS = ["Profile", "Skills", "Experience", "Preferences", "Resume"] as const
 
 export default function CandidateOnboardingPage() {
   const [step, setStep] = useState(0)
@@ -41,6 +41,13 @@ export default function CandidateOnboardingPage() {
     salaryRange: "",
     industries: "",
   })
+  const [resume, setResume] = useState({
+    file: null as File | null,
+    fileName: "",
+    uploading: false,
+    uploaded: false,
+    resumeUrl: "",
+  })
   const router = useRouter()
 
   function next() {
@@ -48,6 +55,57 @@ export default function CandidateOnboardingPage() {
   }
   function back() {
     setStep((s) => Math.max(s - 1, 0))
+  }
+
+  const handleResumeUpload = async (file: File) => {
+    try {
+      setResume(prev => ({ ...prev, uploading: true }))
+      
+      const formData = new FormData()
+      formData.append('resume', file)
+
+      const response = await fetch('/api/upload/resume', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to upload resume')
+      }
+
+      const data = await response.json()
+      
+      setResume(prev => ({
+        ...prev,
+        file,
+        fileName: file.name,
+        uploading: false,
+        uploaded: true,
+        resumeUrl: data.resumeUrl,
+      }))
+    } catch (error) {
+      console.error('Error uploading resume:', error)
+      setResume(prev => ({ ...prev, uploading: false }))
+      alert(error instanceof Error ? error.message : 'Failed to upload resume')
+    }
+  }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleResumeUpload(file)
+    }
+  }
+
+  const removeResume = () => {
+    setResume({
+      file: null,
+      fileName: "",
+      uploading: false,
+      uploaded: false,
+      resumeUrl: "",
+    })
   }
 
   async function finishOnboarding() {
@@ -77,7 +135,8 @@ export default function CandidateOnboardingPage() {
           preferredJobTypes: preferences.industries ? preferences.industries.split(',').map(type => type.trim()).filter(Boolean) : [],
           location: profile.location,
           timezone: "UTC",
-          languages: skills.languages ? skills.languages.split(',').map(lang => lang.trim()).filter(Boolean) : ["English"]
+          languages: skills.languages ? skills.languages.split(',').map(lang => lang.trim()).filter(Boolean) : ["English"],
+          resumeUrl: resume.resumeUrl // Include uploaded resume URL
         }
       }
 
@@ -97,9 +156,6 @@ export default function CandidateOnboardingPage() {
         throw new Error('Failed to save profile')
       }
 
-      // Store role in localStorage for immediate access
-      localStorage.setItem("userRoleIntent", "candidate")
-      
       router.push("/candidate/dashboard")
     } catch (error) {
       console.error("Error completing onboarding:", error)
@@ -403,6 +459,81 @@ export default function CandidateOnboardingPage() {
               </div>
             </div>
           )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-4">
+                <FileText className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Resume Upload</span>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground mb-4">
+                  Upload your resume to help employers get a complete picture of your background and experience.
+                </div>
+                
+                {!resume.uploaded ? (
+                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+                    <input
+                      type="file"
+                      id="resume-upload"
+                      accept=".pdf,.doc,.docx,.txt"
+                      onChange={handleFileChange}
+                      className="hidden"
+                      disabled={resume.uploading}
+                    />
+                    <label
+                      htmlFor="resume-upload"
+                      className={`cursor-pointer ${resume.uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <div className="flex flex-col items-center gap-4">
+                        {resume.uploading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                            <span className="text-sm text-muted-foreground">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                            <div>
+                              <p className="text-sm font-medium">Click to upload your resume</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                PDF, DOC, DOCX, or TXT files up to 10MB
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-sm font-medium">{resume.fileName}</p>
+                          <p className="text-xs text-muted-foreground">Successfully uploaded</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={removeResume}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="text-xs text-muted-foreground">
+                  <p>• Your resume will be visible to employers when reviewing your applications</p>
+                  <p>• Supported formats: PDF, DOC, DOCX, TXT</p>
+                  <p>• Maximum file size: 10MB</p>
+                </div>
+              </div>
+            </div>
+          )}
         </SectionCard>
 
         <div className="flex items-center justify-between">
@@ -419,7 +550,8 @@ export default function CandidateOnboardingPage() {
               disabled={
                 (step === 0 && !profile.fullName) ||
                 (step === 1 && !skills.primarySkills) ||
-                (step === 2 && !experience.currentRole)
+                (step === 2 && !experience.currentRole) ||
+                (step === 3 && !preferences.salaryRange)
               }
               className="rounded-md border border-border bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
             >

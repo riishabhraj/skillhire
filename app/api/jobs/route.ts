@@ -124,7 +124,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create new job with PENDING payment status
+    // Check if this employer is eligible for free jobs
+    const existingJobsCount = await Job.countDocuments({ 
+      companyId: userId
+    })
+    
+    const isFreeJob = existingJobsCount < 20
+    const finalPlanType = isFreeJob ? 'basic' : planType // Free jobs are always basic plan
+
+    // Create new job with appropriate payment status
     const newJob = new Job({
       title,
       description,
@@ -151,15 +159,19 @@ export async function POST(request: NextRequest) {
       companyId: companyId || userId,
       companyName: companyName || 'Your Company',
       companyLogo: companyLogo || '',
-      planType: planType,
-      paymentStatus: 'pending',  // Job starts as pending payment
-      status: 'paused',  // Job is paused until payment is complete
+      planType: finalPlanType,
+      paymentStatus: isFreeJob ? 'paid' : 'pending',  // Free jobs are automatically paid
+      status: isFreeJob ? 'active' : 'paused',  // Free jobs are immediately active
       postedAt: new Date()
     })
 
     const savedJob = await newJob.save()
 
-    return NextResponse.json({ job: savedJob }, { status: 201 })
+    return NextResponse.json({ 
+      job: savedJob,
+      isFreeJob,
+      freeJobsRemaining: Math.max(0, 20 - (existingJobsCount + 1))
+    }, { status: 201 })
   } catch (error) {
     console.error('Error creating job:', error)
     return NextResponse.json(

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, ArrowLeft, User, Calendar, Star, Code, Briefcase, MapPin, ExternalLink, Github } from "lucide-react"
+import { Loader2, ArrowLeft, User, Calendar, Star, Code, Briefcase, MapPin, ExternalLink, Github, Download } from "lucide-react"
 
 interface Candidate {
   _id: string
@@ -39,6 +39,7 @@ interface Candidate {
         duration: string
       }>
     }
+    resumeUrl?: string
   }
   applications?: Array<{
     _id: string
@@ -229,16 +230,6 @@ export default function CandidateProfilePage() {
                     {latestApplication.status.replace('_', ' ')}
                   </Badge>
                 </div>
-
-                {/* Cover Letter */}
-                {latestApplication.coverLetter && (
-                  <div>
-                    <h4 className="font-medium mb-2">Cover Letter</h4>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <p className="text-sm whitespace-pre-wrap">{latestApplication.coverLetter}</p>
-                    </div>
-                  </div>
-                )}
 
                 {/* Projects */}
                 {latestApplication.projects.length > 0 && (
@@ -441,6 +432,17 @@ export default function CandidateProfilePage() {
                   <p className="text-sm text-muted-foreground">
                     {candidate.candidateProfile.experience.relevantYears} years relevant
                   </p>
+                </div>
+              )}
+              {candidate.candidateProfile?.resumeUrl && (
+                <div>
+                  <h4 className="font-medium mb-2">Resume</h4>
+                  <Button asChild size="sm" variant="outline">
+                    <a href={candidate.candidateProfile.resumeUrl} target="_blank" rel="noopener noreferrer">
+                      <Download className="h-3 w-3 mr-1" />
+                      Download Resume
+                    </a>
+                  </Button>
                 </div>
               )}
             </CardContent>

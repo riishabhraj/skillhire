@@ -48,20 +48,33 @@ interface Job {
   careerSiteUrl?: string
 }
 
-export default function JobDetailsPage({ params }: { params: { id: string } }) {
+export default function JobDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const [job, setJob] = useState<Job | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [jobId, setJobId] = useState<string | null>(null)
   const { userData, isLoaded } = useUserData()
 
   useEffect(() => {
-    fetchJob()
-  }, [params.id])
+    const getParams = async () => {
+      const resolvedParams = await params
+      setJobId(resolvedParams.id)
+    }
+    getParams()
+  }, [params])
+
+  useEffect(() => {
+    if (jobId) {
+      fetchJob()
+    }
+  }, [jobId])
 
   const fetchJob = async () => {
+    if (!jobId) return
+    
     try {
-      console.log('Fetching job with ID:', params.id)
-      const response = await fetch(`/api/jobs/${params.id}`)
+      console.log('Fetching job with ID:', jobId)
+      const response = await fetch(`/api/jobs/${jobId}`)
       console.log('Response status:', response.status)
       
       if (!response.ok) {
@@ -141,7 +154,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
             <Badge variant="outline" className="text-sm">
               {job.category}
             </Badge>
-            {userData && (
+            {userData && userData.role === 'candidate' && (
               job.useCareerSite ? (
                 <Button asChild size="lg" variant="outline">
                   <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
@@ -413,7 +426,7 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
           </Card>
 
           {/* Apply Button */}
-          {userData ? (
+          {userData && userData.role === 'candidate' ? (
             job.useCareerSite ? (
               <Button asChild size="lg" className="w-full" variant="outline">
                 <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
@@ -427,6 +440,12 @@ export default function JobDetailsPage({ params }: { params: { id: string } }) {
           </Link>
               </Button>
             )
+          ) : userData && userData.role === 'employer' ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-muted-foreground">
+                Employers cannot apply for jobs
+              </p>
+            </div>
           ) : (
             <div className="space-y-2">
               <Button asChild size="lg" className="w-full">

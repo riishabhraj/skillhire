@@ -18,6 +18,7 @@ export interface IUser extends Document {
       education: string
       portfolio?: string
       resume?: string
+      resumeUrl?: string // S3 URL for uploaded resume
       availability: 'immediately' | '1-2 weeks' | '1 month' | 'flexible'
       preferredJobTypes: string[]
       salaryExpectation?: {
@@ -89,6 +90,7 @@ const UserSchema = new Schema<IUser>({
       education: String,
       portfolio: String,
       resume: String,
+      resumeUrl: String, // S3 URL for uploaded resume
       availability: {
         type: String,
         enum: ['immediately', '1-2 weeks', '1 month', 'flexible']

@@ -337,7 +337,13 @@ export class CandidateEvaluationService {
     const requiredSkills = job.requiredSkills || []
     const preferredSkills = job.preferredSkills || []
 
+    console.log('Skills Evaluation Debug:')
+    console.log('Candidate skills:', candidateSkills)
+    console.log('Required skills:', requiredSkills)
+    console.log('Preferred skills:', preferredSkills)
+
     if (requiredSkills.length === 0) {
+      console.log('No required skills, returning default score 80')
       return 80 // Default score if no specific skill requirements
     }
 
@@ -350,6 +356,7 @@ export class CandidateEvaluationService {
       const isMatched = candidateSkills.some((skill: any) =>
         this.skillsMatch(skill.name || skill, requiredSkill)
       )
+      console.log(`Checking required skill "${requiredSkill}": ${isMatched}`)
       if (isMatched) {
         matchedRequired++
         score += 100 / requiredSkills.length
@@ -367,7 +374,9 @@ export class CandidateEvaluationService {
       }
     }
 
-    return Math.min(100, score)
+    const finalScore = Math.min(100, score)
+    console.log(`Final skills score: ${finalScore} (matched required: ${matchedRequired}/${requiredSkills.length}, matched preferred: ${matchedPreferred})`)
+    return finalScore
   }
 
   /**
