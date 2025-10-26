@@ -70,7 +70,7 @@ export default function HomePage() {
               </SmartNavButton>
               <SmartNavButton
                 signedInHref="/jobs"
-                signedOutHref="/candidate"
+                signedOutHref="/jobs"
                 className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-6 py-3 text-base font-semibold text-foreground transition-all hover:bg-muted"
               >
                 Find Jobs
@@ -450,7 +450,7 @@ export default function HomePage() {
             </SmartNavButton>
             <SmartNavButton
               signedInHref="/jobs"
-              signedOutHref="/candidate"
+              signedOutHref="/jobs"
               className="inline-flex items-center gap-2 rounded-lg border border-primary-foreground/20 bg-transparent px-6 py-3 text-base font-semibold text-primary-foreground transition-all hover:bg-primary-foreground/10"
             >
               Find Opportunities
