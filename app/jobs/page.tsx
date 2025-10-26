@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useUserData } from "@/hooks/use-user"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -42,6 +43,7 @@ export default function JobsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [hasMore, setHasMore] = useState(false)
+  const { userData } = useUserData()
 
   // Filters
   const [search, setSearch] = useState("")
@@ -473,11 +475,19 @@ export default function JobsPage() {
                           View Details
                         </Link>
                       </Button>
-                      <Button asChild variant="outline">
-                        <Link href={`/candidate/apply/${job._id}`}>
-                          Apply Now
-                        </Link>
-                      </Button>
+                      {userData && userData.role === 'candidate' ? (
+                        <Button asChild variant="outline">
+                          <Link href={`/candidate/apply/${job._id}`}>
+                            Apply Now
+                          </Link>
+                        </Button>
+                      ) : (
+                        <Button asChild variant="outline">
+                          <Link href="/candidate">
+                            Sign In to Apply
+                          </Link>
+                        </Button>
+                      )}
                     </>
                   ) : (
                     <Button asChild className="flex-1">

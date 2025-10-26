@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { useUserData } from "@/hooks/use-user"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
-import { Building2, Users, Target, MapPin, Briefcase } from "lucide-react"
+import { Building2, Users, Target, MapPin, Briefcase, Upload, FileText, X } from "lucide-react"
 
-const EMPLOYER_STEPS = ["Company Info", "Hiring Needs", "Team Size", "Preferences"] as const
+const EMPLOYER_STEPS = ["Company Info", "Company Logo", "Hiring Needs", "Team Size", "Preferences"] as const
 
 export default function EmployerOnboardingPage() {
   const [step, setStep] = useState(0)
@@ -35,6 +35,9 @@ export default function EmployerOnboardingPage() {
     projectBased: true,
     fullTime: false,
   })
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
   const router = useRouter()
 
   function next() {
@@ -42,6 +45,59 @@ export default function EmployerOnboardingPage() {
   }
   function back() {
     setStep((s) => Math.max(s - 1, 0))
+  }
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setLogoFile(file)
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setLogoPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeLogo = () => {
+    setLogoFile(null)
+    setLogoPreview(null)
+  }
+
+  const uploadLogo = async (): Promise<string | null> => {
+    if (!logoFile) return null
+
+    setLogoUploading(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string
+        const response = await fetch('/api/upload/logo', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            base64Data: base64,
+            fileName: logoFile.name
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to upload logo')
+        }
+
+        const data = await response.json()
+        setLogoUploading(false)
+        return data.url
+      }
+      reader.readAsDataURL(logoFile)
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      setLogoUploading(false)
+      return null
+    }
+    return null
   }
 
   async function finishOnboarding() {
@@ -60,6 +116,12 @@ export default function EmployerOnboardingPage() {
         return
       }
       
+      // Upload logo if provided
+      let logoUrl = null
+      if (logoFile) {
+        logoUrl = await uploadLogo()
+      }
+      
       const profileData = {
         firstName: userData.firstName || companyInfo.companyName.split(' ')[0] || "Company",
         lastName: userData.lastName || companyInfo.companyName.split(' ').slice(1).join(' ') || "Owner",
@@ -74,7 +136,8 @@ export default function EmployerOnboardingPage() {
           teamSize: teamSize.hiringGoal,
           location: companyInfo.location,
           timezone: "UTC", // You might want to detect this
-          preferredWorkArrangement: preferences.remote ? "remote" : "onsite" as any
+          preferredWorkArrangement: preferences.remote ? "remote" : "onsite" as any,
+          companyLogo: logoUrl
         }
       }
 
@@ -86,8 +149,8 @@ export default function EmployerOnboardingPage() {
         body: JSON.stringify({
           email: userData.email,
           role: 'employer',
-          profile: profileData
-          
+          profile: profileData,
+          onboardingCompleted: true
         })
       })
 
@@ -207,6 +270,70 @@ export default function EmployerOnboardingPage() {
           {step === 1 && (
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-4">
+                <Upload className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Company Logo</span>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground">
+                  Upload your company logo (optional). This will be displayed on your job postings.
+                </div>
+                
+                {!logoPreview ? (
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="hidden"
+                      id="logo-upload"
+                    />
+                    <label
+                      htmlFor="logo-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <Upload className="h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm font-medium">Click to upload logo</span>
+                      <span className="text-xs text-muted-foreground">PNG, JPG, SVG up to 5MB</span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={logoPreview}
+                      alt="Company logo preview"
+                      className="h-20 w-20 object-contain border rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{logoFile?.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {(logoFile?.size || 0) / 1024 / 1024 < 1 
+                          ? `${Math.round((logoFile?.size || 0) / 1024)} KB`
+                          : `${Math.round((logoFile?.size || 0) / 1024 / 1024)} MB`
+                        }
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeLogo}
+                      className="p-2 hover:bg-muted rounded-md"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+                
+                {logoUploading && (
+                  <div className="text-sm text-muted-foreground">
+                    Uploading logo...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 mb-4">
                 <Target className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">Hiring Needs</span>
               </div>
@@ -324,7 +451,7 @@ export default function EmployerOnboardingPage() {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div className="space-y-6">
               <div className="flex items-center gap-3 mb-4">
                 <Briefcase className="h-5 w-5 text-primary" />

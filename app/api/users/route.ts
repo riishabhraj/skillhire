@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { email, role, profile } = body
+    const { email, role, profile, onboardingCompleted } = body
 
     // Debug: Log the received data
     console.log('Received profile data:', JSON.stringify(profile, null, 2))
@@ -78,6 +78,9 @@ export async function POST(request: NextRequest) {
       // Update existing user
       existingUser.email = email
       existingUser.role = role
+      if (onboardingCompleted !== undefined) {
+        existingUser.onboardingCompleted = onboardingCompleted
+      }
       
       // Update only the relevant profile fields
       existingUser.profile.firstName = profile.firstName
@@ -104,6 +107,7 @@ export async function POST(request: NextRequest) {
         clerkId: userId,
         email,
         role,
+        onboardingCompleted: onboardingCompleted || false,
         profile: {
           firstName: profile.firstName,
           lastName: profile.lastName,

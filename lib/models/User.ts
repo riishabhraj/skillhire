@@ -4,6 +4,7 @@ export interface IUser extends Document {
   clerkId: string
   email: string
   role: 'employer' | 'candidate'
+  onboardingCompleted: boolean
   profile: {
     // Common fields
     firstName: string
@@ -48,6 +49,7 @@ export interface IUser extends Document {
       location: string
       timezone: string
       preferredWorkArrangement: 'remote' | 'hybrid' | 'onsite'
+      companyLogo?: string
     }
   }
   createdAt: Date
@@ -69,6 +71,10 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['employer', 'candidate'],
     required: true
+  },
+  onboardingCompleted: {
+    type: Boolean,
+    default: false
   },
   profile: {
     firstName: {
@@ -133,7 +139,8 @@ const UserSchema = new Schema<IUser>({
       preferredWorkArrangement: {
         type: String,
         enum: ['remote', 'hybrid', 'onsite']
-      }
+      },
+      companyLogo: String
     }
   }
 }, {

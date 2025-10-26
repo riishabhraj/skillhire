@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Briefcase, Users, TrendingUp, Plus, Eye, BarChart3, Settings, Clock, DollarSign, MapPin } from "lucide-react"
+import { Loader2, Briefcase, Users, TrendingUp, Plus, Eye, BarChart3, Settings, Clock, DollarSign, MapPin, Building2 } from "lucide-react"
 import RoleGuard from "@/components/role-guard"
 
 interface Job {
@@ -249,6 +249,12 @@ export default function EmployerDashboardPage() {
             <Link href="/employer/candidates">
               <Users className="h-4 w-4 mr-2" />
               View Candidates
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/employer/profile">
+              <Building2 className="h-4 w-4 mr-2" />
+              Company Profile
             </Link>
           </Button>
           <Button asChild variant="outline">

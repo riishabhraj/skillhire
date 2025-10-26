@@ -157,7 +157,8 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
     if (newProject.title && newProject.description) {
       const project = {
         ...newProject,
-        id: Date.now().toString()
+        id: Date.now().toString(),
+        screenshots: [] // Add missing screenshots property
       }
       setApplicationData(prev => ({
         ...prev,
@@ -183,6 +184,7 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
       setNewChallenge("")
       setNewAchievement("")
       setNewFeature("")
+      setNewSkill("") // Clear technical skills input field
     }
   }
 
@@ -304,7 +306,7 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
 
   if (!job) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <Alert variant="destructive">
           <X className="h-4 w-4" />
           <AlertDescription>Job not found</AlertDescription>
@@ -315,7 +317,7 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto px-4 py-8">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
@@ -535,7 +537,17 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
                     {newProject.technologies.map((tech, index) => (
                       <Badge key={index} variant="secondary" className="flex items-center gap-1">
                         {tech}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('technologies', index)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeItem('technologies', index)
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
@@ -593,7 +605,17 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
                     {newProject.challenges.map((challenge, index) => (
                       <Badge key={index} variant="outline" className="flex items-center gap-1">
                         {challenge}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('challenges', index)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeItem('challenges', index)
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
@@ -616,7 +638,17 @@ function ApplyToJobPage({ params }: { params: Promise<{ jobId: string }> }) {
                     {newProject.achievements.map((achievement, index) => (
                       <Badge key={index} variant="secondary" className="flex items-center gap-1">
                         {achievement}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('achievements', index)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeItem('achievements', index)
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>

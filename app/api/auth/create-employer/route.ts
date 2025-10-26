@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         success: true, 
         role: user.role,
+        onboardingCompleted: user.onboardingCompleted,
         user: {
           id: user._id,
           clerkId: user.clerkId,
@@ -67,6 +68,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ 
           success: true, 
           role: 'employer',
+          onboardingCompleted: user.onboardingCompleted,
           user: {
             id: user._id,
             clerkId: user.clerkId,
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       role: 'employer',
+      onboardingCompleted: user.onboardingCompleted,
       user: {
         id: user._id,
         clerkId: user.clerkId,

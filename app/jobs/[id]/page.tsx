@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, MapPin, Briefcase, DollarSign, Clock, Users, CheckCircle, Star, Code, Target } from "lucide-react"
+import { Loader2, MapPin, Briefcase, DollarSign, Clock, Users, CheckCircle, Star, Code, Target, Building2 } from "lucide-react"
 
 interface Job {
   _id: string
@@ -154,20 +154,45 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
             <Badge variant="outline" className="text-sm">
               {job.category}
             </Badge>
-            {userData && userData.role === 'candidate' && (
-              job.useCareerSite ? (
-                <Button asChild size="lg" variant="outline">
-                  <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
-                    Apply on Company Site
-                  </a>
+            {userData && userData.role === 'candidate' ? (
+              <div className="flex flex-col gap-2">
+                {job.useCareerSite ? (
+                  <Button asChild size="lg" variant="outline">
+                    <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
+                      Apply on Company Site
+                    </a>
+                  </Button>
+                ) : (
+                  <Button asChild size="lg">
+                    <Link href={`/candidate/apply/${job._id}`}>
+                      Apply Now
+                    </Link>
+                  </Button>
+                )}
+                <Button asChild size="sm" variant="outline">
+                  <Link href="/employer/profile">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    View Company Profile
+                  </Link>
                 </Button>
-              ) : (
+              </div>
+            ) : userData && userData.role === 'employer' ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">
+                  Employers cannot apply for jobs
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
                 <Button asChild size="lg">
-                  <Link href={`/candidate/apply/${job._id}`}>
-                    Apply Now
-          </Link>
+                  <Link href="/candidate">
+                    Sign In to Apply
+                  </Link>
                 </Button>
-              )
+                <p className="text-xs text-center text-muted-foreground">
+                  You need to be signed in to apply for this job
+                </p>
+              </div>
             )}
           </div>
         </div>
@@ -427,19 +452,27 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
 
           {/* Apply Button */}
           {userData && userData.role === 'candidate' ? (
-            job.useCareerSite ? (
-              <Button asChild size="lg" className="w-full" variant="outline">
-                <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
-                  Apply on Company Site
-                </a>
-              </Button>
-            ) : (
-              <Button asChild size="lg" className="w-full">
-                <Link href={`/candidate/apply/${job._id}`}>
-                  Apply Now
+            <div className="space-y-2">
+              {job.useCareerSite ? (
+                <Button asChild size="lg" className="w-full" variant="outline">
+                  <a href={job.careerSiteUrl} target="_blank" rel="noopener noreferrer">
+                    Apply on Company Site
+                  </a>
+                </Button>
+              ) : (
+                <Button asChild size="lg" className="w-full">
+                  <Link href={`/candidate/apply/${job._id}`}>
+                    Apply Now
+                  </Link>
+                </Button>
+              )}
+              <Button asChild size="sm" className="w-full" variant="outline">
+                <Link href="/employer/profile">
+                  <Briefcase className="h-4 w-4 mr-2" />
+                  View Company Profile
           </Link>
               </Button>
-            )
+            </div>
           ) : userData && userData.role === 'employer' ? (
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground">
@@ -449,9 +482,9 @@ export default function JobDetailsPage({ params }: { params: Promise<{ id: strin
           ) : (
             <div className="space-y-2">
               <Button asChild size="lg" className="w-full">
-                <Link href="/sign-in/candidate">
+                <Link href="/candidate">
                   Sign In to Apply
-          </Link>
+                </Link>
               </Button>
               <p className="text-xs text-center text-muted-foreground">
                 You need to be signed in to apply for this job

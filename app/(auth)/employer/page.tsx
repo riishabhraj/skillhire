@@ -174,8 +174,14 @@ export default function EmployerAuthPage() {
           console.log('🔵 Create employer response:', data)
 
           if (response.ok && data.role === 'employer') {
-            console.log('✅ Employer account created, redirecting to dashboard')
-            router.push('/employer/dashboard')
+            console.log('✅ Employer account created, checking onboarding status')
+            if (data.onboardingCompleted) {
+              console.log('✅ Onboarding completed, redirecting to dashboard')
+              router.push('/employer/dashboard')
+            } else {
+              console.log('🔄 Onboarding needed, redirecting to onboarding')
+              router.push('/onboarding/employer')
+            }
           } else if (data.role === 'candidate') {
             console.log('❌ Email is registered as candidate, signing out')
             await signOut()
