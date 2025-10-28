@@ -29,22 +29,35 @@ export default function RootLayout({
       <body className={`${poppins.variable} font-sans antialiased`}>
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
           <header className="border-b border-border">
-            <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
-              <a href="/" className="font-semibold text-foreground text-balance">
-                SkillHire
-              </a>
-              <nav className="hidden md:flex items-center gap-6">
-                <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Features
-                </a>
-                <a href="/remote-jobs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Remote Jobs
-                </a>
-                <a href="#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  About
-                </a>
-              </nav>
-              <RoleBasedNav />
+            <div className="mx-auto max-w-6xl px-4 py-3">
+              <div className="grid grid-cols-3 items-center">
+                {/* Left side - Logo */}
+                <div className="justify-self-start">
+                  <a href="/" className="font-semibold text-foreground text-balance">
+                    SkillHire
+                  </a>
+                </div>
+                
+                {/* Center - Navigation links */}
+                <div className="justify-self-center">
+                  <nav className="hidden md:flex items-center gap-6">
+                    <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Features
+                    </a>
+                    <a href="/remote-jobs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Remote Jobs
+                    </a>
+                    <a href="#about" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      About
+                    </a>
+                  </nav>
+                </div>
+                
+                {/* Right side - Auth buttons */}
+                <div className="justify-self-end">
+                  <RoleBasedNav />
+                </div>
+              </div>
             </div>
           </header>
           <main className="min-h-screen">
