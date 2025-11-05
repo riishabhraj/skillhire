@@ -534,6 +534,6 @@ export default function JobsPage() {
           <span className="ml-2">Loading more jobs...</span>
         </div>
       )}
-    </div>
+      </div>
   )
 }

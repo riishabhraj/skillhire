@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Briefcase, Clock, CheckCircle, XCircle, Eye, TrendingUp, Plus } from "lucide-react"
 import RoleGuard from "@/components/role-guard"
+import OnboardingGuard from "@/components/onboarding-guard"
 
 interface Application {
   _id: string
@@ -40,7 +41,6 @@ interface DashboardStats {
   shortlistedApplications: number
   underReviewApplications: number
   rejectedApplications: number
-  averageScore: number
   recentApplications: number
 }
 
@@ -80,14 +80,6 @@ export default function CandidateDashboardPage() {
       const rejectedApplications = data.applications?.filter((app: Application) => 
         app.status === 'rejected' || app.evaluation?.shortlistStatus === 'rejected'
       ).length || 0
-      
-      const applicationsWithScores = data.applications?.filter((app: Application) => 
-        app.evaluation?.overallScore
-      ) || []
-      const averageScore = applicationsWithScores.length > 0 
-        ? Math.round(applicationsWithScores.reduce((sum: number, app: Application) => 
-            sum + (app.evaluation?.overallScore || 0), 0) / applicationsWithScores.length)
-        : 0
 
       const recentApplications = data.applications?.filter((app: Application) => {
         const submittedDate = new Date(app.submittedAt)
@@ -101,7 +93,6 @@ export default function CandidateDashboardPage() {
         shortlistedApplications,
         underReviewApplications,
         rejectedApplications,
-        averageScore,
         recentApplications
       })
     } catch (err) {
@@ -167,9 +158,10 @@ export default function CandidateDashboardPage() {
 
   return (
     <RoleGuard allowedRoles={['candidate']}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <OnboardingGuard allowedRoles={['candidate']}>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
@@ -228,13 +220,13 @@ export default function CandidateDashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+              <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.averageScore}/100</div>
+              <div className="text-2xl font-bold">{stats.recentApplications}</div>
               <p className="text-xs text-muted-foreground">
-                Project evaluation score
+                Applications this week
               </p>
             </CardContent>
           </Card>
@@ -309,35 +301,6 @@ export default function CandidateDashboardPage() {
                 </CardHeader>
                 
                 <CardContent className="space-y-4">
-                  {application.evaluation ? (
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-semibold text-lg">{application.evaluation.overallScore}/100</div>
-                        <div className="text-muted-foreground">Overall</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-lg">{application.evaluation.projectScore}/100</div>
-                        <div className="text-muted-foreground">Projects</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold text-lg">{application.evaluation.skillsScore}/100</div>
-                        <div className="text-muted-foreground">Skills</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <div className="flex items-center justify-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm">
-                          {application.timeUntilVisible && application.timeUntilVisible > 0 
-                            ? `Evaluation results will be available in ${application.timeUntilVisible} hours`
-                            : 'Evaluation in progress...'
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                  
                   {application.evaluation?.feedback && (
                     <div className="p-3 bg-muted rounded-lg">
                       <p className="text-sm text-muted-foreground">
@@ -416,7 +379,8 @@ export default function CandidateDashboardPage() {
           </Card>
         </div>
       </div>
-      </div>
+        </div>
+      </OnboardingGuard>
     </RoleGuard>
   )
 }

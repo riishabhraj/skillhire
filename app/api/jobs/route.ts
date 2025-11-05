@@ -16,10 +16,10 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
 
-    // Build query - ONLY show jobs that are active AND paid
+    // Build query - ONLY show jobs that are active AND completed
     const query: any = { 
       status: 'active',
-      paymentStatus: 'paid'  // Critical: Only show paid jobs
+      paymentStatus: 'completed'  // Critical: Only show completed jobs
     }
     
     if (category) {
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
       companyName: companyName || 'Your Company',
       companyLogo: companyLogo || '',
       planType: finalPlanType,
-      paymentStatus: isFreeJob ? 'paid' : 'pending',  // Free jobs are automatically paid
+      paymentStatus: isFreeJob ? 'completed' : 'pending',  // Free jobs are automatically completed
       status: isFreeJob ? 'active' : 'paused',  // Free jobs are immediately active
       postedAt: new Date()
     })

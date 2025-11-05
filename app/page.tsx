@@ -124,7 +124,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Why choose SkillHire?
+              Why choose ProjectHire?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               Traditional hiring is broken. We fix it with project-based evaluation.
@@ -221,7 +221,7 @@ export default function HomePage() {
                 ))}
               </div>
               <p className="mb-4 text-muted-foreground">
-                "SkillHire transformed our hiring process. We now hire 3x faster with 90% better candidate quality."
+                "ProjectHire transformed our hiring process. We now hire 3x faster with 90% better candidate quality."
               </p>
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -398,7 +398,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              About SkillHire
+              About ProjectHire
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
               We're on a mission to make hiring more effective and fair.
@@ -408,7 +408,7 @@ export default function HomePage() {
             <div>
               <h3 className="text-xl font-semibold mb-4">Our Story</h3>
               <p className="text-muted-foreground mb-4">
-                Founded in 2024, SkillHire was born from a simple observation: traditional hiring processes 
+                Founded in 2024, ProjectHire was born from a simple observation: traditional hiring processes 
                 are broken. Too many great candidates get overlooked because of resume gaps, while 
                 unqualified candidates slip through with polished CVs.
               </p>
@@ -437,7 +437,7 @@ export default function HomePage() {
             Ready to revolutionize your hiring?
           </h2>
           {/* <p className="mt-4 text-lg text-primary-foreground/80">
-            Join 500+ companies already using SkillHire to find better talent faster.
+            Join 500+ companies already using ProjectHire to find better talent faster.
           </p> */}
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <SmartNavButton

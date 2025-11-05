@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { ClerkProvider } from "@clerk/nextjs"
 import RoleBasedNav from "@/components/role-based-nav"
 import Footer from "@/components/footer"
+import { Target } from "lucide-react"
 import "./globals.css"
 
 const poppins = Poppins({
@@ -14,7 +15,7 @@ const poppins = Poppins({
 })
 
 export const metadata: Metadata = {
-  title: "SkillHire - Project-Based Hiring Platform",
+  title: "ProjectHire - Project-Based Hiring Platform",
   description: "Revolutionize your hiring process with project-based evaluation. Find better candidates faster through hands-on projects that mirror real work.",
   keywords: "hiring, recruitment, project-based hiring, talent evaluation, job platform",
 }
@@ -30,19 +31,33 @@ export default function RootLayout({
         <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}>
           <header className="border-b border-border">
             <div className="mx-auto max-w-6xl px-4 py-3">
-              <div className="grid grid-cols-3 items-center">
+              {/* Mobile layout */}
+              <div className="flex md:hidden items-center justify-between">
+                <a href="/" className="flex items-center gap-2 font-semibold text-foreground">
+                  <Target className="h-5 w-5 text-primary" />
+                  <span>ProjectHire</span>
+                </a>
+                <RoleBasedNav />
+              </div>
+              
+              {/* Desktop layout */}
+              <div className="hidden md:grid grid-cols-3 items-center">
                 {/* Left side - Logo */}
                 <div className="justify-self-start">
-                  <a href="/" className="font-semibold text-foreground text-balance">
-                    SkillHire
+                  <a href="/" className="flex items-center gap-2 font-semibold text-foreground">
+                    <Target className="h-5 w-5 text-primary" />
+                    <span>ProjectHire</span>
                   </a>
                 </div>
                 
                 {/* Center - Navigation links */}
                 <div className="justify-self-center">
-                  <nav className="hidden md:flex items-center gap-6">
+                  <nav className="flex items-center gap-6">
                     <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       Features
+                    </a>
+                    <a href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                      Projects
                     </a>
                     <a href="/remote-jobs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                       Remote Jobs

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
 
 export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded'
-export type PaymentMethod = 'lemonsqueezy' | 'stripe' | 'paypal' | 'bank_transfer'
+export type PaymentMethod = 'stripe' | 'paypal' | 'bank_transfer'
 export type PlanType = 'basic' | 'premium'
 
 export interface IPayment extends Document {
@@ -12,14 +12,10 @@ export interface IPayment extends Document {
   currency: string
   status: PaymentStatus
   paymentMethod: PaymentMethod
-  // Lemon Squeezy specific fields
-  lemonSqueezyOrderId?: string
-  lemonSqueezyCheckoutId?: string
-  lemonSqueezyCustomerId?: string
-  
-  // Stripe specific fields (legacy)
+  // Stripe specific fields
   stripePaymentIntentId?: string
   stripeSessionId?: string
+  stripeCustomerId?: string
   transactionId?: string
   paidAt?: Date
   refundedAt?: Date
@@ -53,15 +49,12 @@ const PaymentSchema: Schema = new Schema(
     paymentMethod: { 
       type: String, 
       required: true, 
-      enum: ['lemonsqueezy', 'stripe', 'paypal', 'bank_transfer'] 
+      enum: ['stripe', 'paypal', 'bank_transfer'] 
     },
-    // Lemon Squeezy specific fields
-    lemonSqueezyOrderId: { type: String },
-    lemonSqueezyCheckoutId: { type: String },
-    lemonSqueezyCustomerId: { type: String },
-    // Stripe specific fields (legacy)
+    // Stripe specific fields
     stripePaymentIntentId: { type: String },
     stripeSessionId: { type: String },
+    stripeCustomerId: { type: String },
     transactionId: { type: String },
     paidAt: { type: Date },
     refundedAt: { type: Date },
@@ -78,10 +71,9 @@ const PaymentSchema: Schema = new Schema(
 // Index for efficient queries
 PaymentSchema.index({ userId: 1, status: 1 })
 PaymentSchema.index({ jobId: 1 })
-PaymentSchema.index({ lemonSqueezyOrderId: 1 })
-PaymentSchema.index({ lemonSqueezyCheckoutId: 1 })
 PaymentSchema.index({ stripePaymentIntentId: 1 })
 PaymentSchema.index({ stripeSessionId: 1 })
+PaymentSchema.index({ stripeCustomerId: 1 })
 
 const Payment: Model<IPayment> = mongoose.models.Payment || mongoose.model<IPayment>('Payment', PaymentSchema)
 

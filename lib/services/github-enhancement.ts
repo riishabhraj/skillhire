@@ -86,6 +86,15 @@ export interface EnhancedProject {
   projectComplexity?: string
   isActive?: boolean
   hasRecentActivity?: boolean
+  
+  // NEW: Deep code analysis
+  readmeContent?: string
+  hasTests?: boolean
+  hasCICD?: boolean
+  dependencyCount?: number
+  architectureScore?: number
+  documentationScore?: number
+  mainLanguage?: string
 }
 
 export class GitHubEnhancementService {
@@ -112,12 +121,16 @@ export class GitHubEnhancementService {
       const { owner, repo } = this.parseGitHubUrl(project.githubUrl)
       
       // Fetch all data in parallel for better performance
-      const [repoData, languages, commits, stats, issues] = await Promise.all([
+      const [repoData, languages, commits, stats, issues, readme, hasTests, hasCICD, dependencies] = await Promise.all([
         this.fetchRepository(owner, repo),
         this.fetchLanguages(owner, repo),
         this.fetchCommits(owner, repo),
         this.fetchStats(owner, repo),
-        this.fetchIssues(owner, repo)
+        this.fetchIssues(owner, repo),
+        this.fetchReadme(owner, repo),
+        this.checkForTests(owner, repo),
+        this.checkForCICD(owner, repo),
+        this.fetchDependencies(owner, repo)
       ])
 
       const enhancedProject: EnhancedProject = {
@@ -136,7 +149,16 @@ export class GitHubEnhancementService {
         codeQuality: this.calculateCodeQuality(repoData, commits, issues),
         projectComplexity: this.calculateComplexity(repoData, languages, commits),
         isActive: this.isRepositoryActive(repoData, commits),
-        hasRecentActivity: this.hasRecentActivity(commits)
+        hasRecentActivity: this.hasRecentActivity(commits),
+        
+        // NEW: Deep code analysis
+        readmeContent: readme,
+        hasTests,
+        hasCICD,
+        dependencyCount: dependencies ? Object.keys(dependencies).length : 0,
+        architectureScore: this.calculateArchitectureScore(repoData, languages, hasTests, hasCICD, dependencies),
+        documentationScore: this.calculateDocumentationScore(readme, repoData),
+        mainLanguage: repoData.language || Object.keys(languages)[0] || 'Unknown'
       }
 
       return enhancedProject
@@ -316,5 +338,209 @@ export class GitHubEnhancementService {
     const lastCommit = new Date(commits[0].commit.author.date)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
     return lastCommit > thirtyDaysAgo
+  }
+
+  /**
+   * NEW: Fetch README content
+   */
+  private async fetchReadme(owner: string, repo: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/readme`, {
+        headers: this.getHeaders()
+      })
+      
+      if (!response.ok) return ''
+      
+      const data = await response.json()
+      // Decode base64 content
+      const content = Buffer.from(data.content, 'base64').toString('utf-8')
+      // Limit to first 1000 characters to avoid token limits
+      return content.substring(0, 1000)
+    } catch (error) {
+      console.error('Failed to fetch README:', error)
+      return ''
+    }
+  }
+
+  /**
+   * NEW: Check for test directory/files
+   */
+  private async checkForTests(owner: string, repo: string): Promise<boolean> {
+    try {
+      // Check common test directories
+      const testPaths = ['test', 'tests', '__tests__', 'spec', 'specs']
+      
+      for (const path of testPaths) {
+        try {
+          const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/contents/${path}`, {
+            headers: this.getHeaders()
+          })
+          if (response.ok) return true
+        } catch {
+          // Directory doesn't exist, continue
+        }
+      }
+      
+      // Check for test files in root
+      const rootResponse = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/contents`, {
+        headers: this.getHeaders()
+      })
+      
+      if (rootResponse.ok) {
+        const files = await rootResponse.json()
+        const hasTestFiles = Array.isArray(files) && files.some((file: any) => 
+          file.name.includes('test') || 
+          file.name.includes('spec') ||
+          file.name.endsWith('.test.js') ||
+          file.name.endsWith('.test.ts') ||
+          file.name.endsWith('.spec.js') ||
+          file.name.endsWith('.spec.ts')
+        )
+        return hasTestFiles
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Failed to check for tests:', error)
+      return false
+    }
+  }
+
+  /**
+   * NEW: Check for CI/CD configuration
+   */
+  private async checkForCICD(owner: string, repo: string): Promise<boolean> {
+    try {
+      // Check for common CI/CD config files
+      const cicdFiles = [
+        '.github/workflows',
+        '.gitlab-ci.yml',
+        '.travis.yml',
+        'Jenkinsfile',
+        '.circleci/config.yml',
+        'azure-pipelines.yml'
+      ]
+      
+      for (const path of cicdFiles) {
+        try {
+          const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/contents/${path}`, {
+            headers: this.getHeaders()
+          })
+          if (response.ok) return true
+        } catch {
+          // File doesn't exist, continue
+        }
+      }
+      
+      return false
+    } catch (error) {
+      console.error('Failed to check for CI/CD:', error)
+      return false
+    }
+  }
+
+  /**
+   * NEW: Fetch dependencies (package.json, requirements.txt, etc.)
+   */
+  private async fetchDependencies(owner: string, repo: string): Promise<any> {
+    const depFiles = [
+      { file: 'package.json', parser: (content: string) => JSON.parse(content).dependencies },
+      { file: 'requirements.txt', parser: (content: string) => content.split('\n').filter(l => l.trim()) },
+      { file: 'Cargo.toml', parser: (content: string) => content.match(/\[dependencies\]/)?.[0] || {} },
+      { file: 'go.mod', parser: (content: string) => content.match(/require \(/)?.[0] || {} }
+    ]
+    
+    for (const { file, parser } of depFiles) {
+      try {
+        const response = await fetch(`${this.baseUrl}/repos/${owner}/${repo}/contents/${file}`, {
+          headers: this.getHeaders()
+        })
+        
+        if (!response.ok) continue
+        
+        const data = await response.json()
+        const content = Buffer.from(data.content, 'base64').toString('utf-8')
+        return parser(content)
+      } catch {
+        // File doesn't exist or parsing failed, try next
+      }
+    }
+    
+    return null
+  }
+
+  /**
+   * NEW: Calculate architecture score
+   */
+  private calculateArchitectureScore(
+    repoData: GitHubRepositoryData,
+    languages: GitHubLanguageData,
+    hasTests: boolean,
+    hasCICD: boolean,
+    dependencies: any
+  ): number {
+    let score = 50 // Base score
+    
+    // Multi-language project (good architecture)
+    const languageCount = Object.keys(languages).length
+    if (languageCount >= 3) score += 15
+    else if (languageCount >= 2) score += 10
+    
+    // Has tests
+    if (hasTests) score += 20
+    
+    // Has CI/CD
+    if (hasCICD) score += 15
+    
+    // Reasonable number of dependencies (not too many, not too few)
+    if (dependencies) {
+      const depCount = Object.keys(dependencies).length
+      if (depCount >= 5 && depCount <= 30) score += 10
+      else if (depCount > 30) score += 5 // Too many dependencies can be a red flag
+    }
+    
+    // Repository size indicates good structure
+    if (repoData.size > 1000 && repoData.size < 100000) score += 10
+    
+    return Math.min(100, score)
+  }
+
+  /**
+   * NEW: Calculate documentation score
+   */
+  private calculateDocumentationScore(readme: string, repoData: GitHubRepositoryData): number {
+    let score = 0
+    
+    if (!readme) return 20 // Minimal score for no README
+    
+    // README length
+    if (readme.length > 500) score += 30
+    else if (readme.length > 200) score += 20
+    else score += 10
+    
+    // Check for common documentation sections
+    const readmeLower = readme.toLowerCase()
+    const sections = [
+      'installation',
+      'usage',
+      'example',
+      'api',
+      'contributing',
+      'license',
+      'test',
+      'documentation'
+    ]
+    
+    sections.forEach(section => {
+      if (readmeLower.includes(section)) score += 5
+    })
+    
+    // Check for images/diagrams (indicates thorough documentation)
+    if (readme.includes('![') || readme.includes('<img')) score += 15
+    
+    // Description in repo
+    if (repoData.description && repoData.description.length > 20) score += 10
+    
+    return Math.min(100, score)
   }
 }

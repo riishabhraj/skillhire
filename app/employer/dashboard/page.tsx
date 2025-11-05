@@ -7,8 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Briefcase, Users, TrendingUp, Plus, Eye, BarChart3, Settings, Clock, DollarSign, MapPin, Building2 } from "lucide-react"
+import { Loader2, Briefcase, Users, TrendingUp, Plus, Eye, BarChart3, Settings, Clock, DollarSign, MapPin, Building2, CreditCard } from "lucide-react"
 import RoleGuard from "@/components/role-guard"
+import OnboardingGuard from "@/components/onboarding-guard"
+import { PaymentButton } from "@/components/payment-button"
 
 interface Job {
   _id: string
@@ -37,7 +39,6 @@ interface DashboardStats {
   shortlistedCandidates: number
   activeJobs: number
   recentApplications: number
-  averageScore: number
 }
 
 export default function EmployerDashboardPage() {
@@ -93,8 +94,7 @@ export default function EmployerDashboardPage() {
         totalApplications,
         shortlistedCandidates,
         activeJobs,
-        recentApplications: 0, // TODO: Calculate recent applications
-        averageScore: 0 // TODO: Calculate average score
+        recentApplications: 0 // TODO: Calculate recent applications
       })
 
     } catch (err) {
@@ -147,9 +147,10 @@ export default function EmployerDashboardPage() {
 
   return (
     <RoleGuard allowedRoles={['employer']}>
-      <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
+      <OnboardingGuard allowedRoles={['employer']}>
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-8">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground mt-2">
           Welcome back, {userData?.firstName}! Here's your hiring overview.
@@ -206,13 +207,13 @@ export default function EmployerDashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Score</CardTitle>
+              <CardTitle className="text-sm font-medium">Active Jobs</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.averageScore}/100</div>
+              <div className="text-2xl font-bold">{stats.activeJobs}</div>
               <p className="text-xs text-muted-foreground">
-                Candidate quality
+                Currently hiring
               </p>
             </CardContent>
           </Card>
@@ -263,6 +264,38 @@ export default function EmployerDashboardPage() {
               Evaluation Settings
             </Link>
           </Button>
+        </div>
+      </div>
+
+      {/* Test Payment Buttons - For Testing Only */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">🧪 Test Payment Integration</h2>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-yellow-600 text-lg">⚠️</span>
+            <h3 className="text-yellow-800 font-medium">Testing Mode</h3>
+          </div>
+          <p className="text-yellow-700 text-sm">
+            These buttons are for testing the Stripe payment integration. They will create a test job posting and process payment.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <PaymentButton 
+            planType="basic" 
+            jobId="test-job-basic"
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Test Basic Plan ($99)
+          </PaymentButton>
+          <PaymentButton 
+            planType="premium" 
+            jobId="test-job-premium"
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            <CreditCard className="h-4 w-4 mr-2" />
+            Test Premium Plan ($128)
+          </PaymentButton>
         </div>
       </div>
 
@@ -376,7 +409,8 @@ export default function EmployerDashboardPage() {
           </div>
         )}
       </div>
-      </div>
+        </div>
+      </OnboardingGuard>
     </RoleGuard>
   )
 }

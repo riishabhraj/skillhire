@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation"
 import { useUserData } from "@/hooks/use-user"
 import { PageHeader } from "@/components/page-header"
 import { SectionCard } from "@/components/section-card"
-import { Building2, Users, Target, MapPin, Briefcase, Upload, FileText, X } from "lucide-react"
+import { Building2, Upload, X } from "lucide-react"
 
-const EMPLOYER_STEPS = ["Company Info", "Company Logo", "Hiring Needs", "Team Size", "Preferences"] as const
+const EMPLOYER_STEPS = ["Company Info", "Company Logo"] as const
 
 export default function EmployerOnboardingPage() {
   const [step, setStep] = useState(0)
@@ -18,22 +18,6 @@ export default function EmployerOnboardingPage() {
     industry: "",
     location: "",
     companySize: "",
-  })
-  const [hiringNeeds, setHiringNeeds] = useState({
-    primaryRoles: "",
-    experienceLevel: "",
-    budget: "",
-    timeline: "",
-  })
-  const [teamSize, setTeamSize] = useState({
-    currentTeam: "",
-    hiringGoal: "",
-    teamStructure: "",
-  })
-  const [preferences, setPreferences] = useState({
-    remote: true,
-    projectBased: true,
-    fullTime: false,
   })
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string | null>(null)
@@ -131,12 +115,10 @@ export default function EmployerOnboardingPage() {
           companySize: companyInfo.companySize as any,
           industry: companyInfo.industry,
           website: companyInfo.website,
-          companyDescription: `We are a ${companyInfo.industry} company looking to hire ${hiringNeeds.primaryRoles}`,
-          hiringNeeds: hiringNeeds.primaryRoles.split(',').map(role => role.trim()).filter(Boolean),
-          teamSize: teamSize.hiringGoal,
+          companyDescription: `We are a ${companyInfo.industry} company`,
           location: companyInfo.location,
           timezone: "UTC", // You might want to detect this
-          preferredWorkArrangement: preferences.remote ? "remote" : "onsite" as any,
+          preferredWorkArrangement: "remote" as any,
           companyLogo: logoUrl
         }
       }
@@ -228,11 +210,17 @@ export default function EmployerOnboardingPage() {
                   >
                     <option value="">Select industry</option>
                     <option value="technology">Technology</option>
-                    <option value="fintech">Fintech</option>
+                    <option value="artificial-intelligence">Artificial Intelligence</option>
+                    <option value="machine-learning">Machine Learning</option>
+                    <option value="blockchain">Blockchain</option>
+                    <option value="cryptocurrency">Cryptocurrency</option>
+                    <option value="virtual-reality">Virtual Reality</option>
+                    <option value="internet-of-things">Internet of Things</option>
+                    <option value="biotechnology">Biotechnology</option>
                     <option value="healthcare">Healthcare</option>
+                    <option value="fintech">Fintech</option>
                     <option value="ecommerce">E-commerce</option>
                     <option value="saas">SaaS</option>
-                    <option value="other">Other</option>
                   </select>
                 </label>
                 
@@ -331,167 +319,6 @@ export default function EmployerOnboardingPage() {
             </div>
           )}
 
-          {step === 3 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Target className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Hiring Needs</span>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Primary roles you're hiring for</span>
-                  <input
-                    type="text"
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    placeholder="Frontend Developer, Backend Engineer, Product Manager"
-                    value={hiringNeeds.primaryRoles}
-                    onChange={(e) => setHiringNeeds(prev => ({ ...prev, primaryRoles: e.target.value }))}
-                  />
-                </label>
-                
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Experience level</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={hiringNeeds.experienceLevel}
-                    onChange={(e) => setHiringNeeds(prev => ({ ...prev, experienceLevel: e.target.value }))}
-                  >
-                    <option value="">Select experience level</option>
-                    <option value="junior">Junior (0-2 years)</option>
-                    <option value="mid">Mid-level (2-5 years)</option>
-                    <option value="senior">Senior (5+ years)</option>
-                    <option value="mixed">Mixed levels</option>
-                  </select>
-                </label>
-                
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Budget range</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={hiringNeeds.budget}
-                    onChange={(e) => setHiringNeeds(prev => ({ ...prev, budget: e.target.value }))}
-                  >
-                    <option value="">Select budget range</option>
-                    <option value="under-50k">Under $50k</option>
-                    <option value="50k-100k">$50k - $100k</option>
-                    <option value="100k-200k">$100k - $200k</option>
-                    <option value="200k-plus">$200k+</option>
-                  </select>
-                </label>
-                
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Hiring timeline</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={hiringNeeds.timeline}
-                    onChange={(e) => setHiringNeeds(prev => ({ ...prev, timeline: e.target.value }))}
-                  >
-                    <option value="">Select timeline</option>
-                    <option value="asap">ASAP</option>
-                    <option value="1-month">Within 1 month</option>
-                    <option value="3-months">Within 3 months</option>
-                    <option value="6-months">Within 6 months</option>
-                    <option value="flexible">Flexible</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {step === 2 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Users className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Team Information</span>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Current team size</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={teamSize.currentTeam}
-                    onChange={(e) => setTeamSize(prev => ({ ...prev, currentTeam: e.target.value }))}
-                  >
-                    <option value="">Select team size</option>
-                    <option value="1-10">1-10 employees</option>
-                    <option value="11-50">11-50 employees</option>
-                    <option value="51-200">51-200 employees</option>
-                    <option value="200-plus">200+ employees</option>
-                  </select>
-                </label>
-                
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">How many people do you plan to hire?</span>
-                  <input
-                    type="text"
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    placeholder="e.g., 3-5 developers, 1 designer"
-                    value={teamSize.hiringGoal}
-                    onChange={(e) => setTeamSize(prev => ({ ...prev, hiringGoal: e.target.value }))}
-                  />
-                </label>
-                
-                <label className="flex flex-col gap-2">
-                  <span className="text-sm font-medium">Team structure</span>
-                  <select
-                    className="rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={teamSize.teamStructure}
-                    onChange={(e) => setTeamSize(prev => ({ ...prev, teamStructure: e.target.value }))}
-                  >
-                    <option value="">Select structure</option>
-                    <option value="startup">Startup (flat structure)</option>
-                    <option value="traditional">Traditional hierarchy</option>
-                    <option value="agile">Agile/Scrum teams</option>
-                    <option value="remote-first">Remote-first</option>
-                  </select>
-                </label>
-              </div>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Briefcase className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Hiring Preferences</span>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground mb-4">
-                  Tell us about your hiring preferences:
-                </div>
-                
-                <label className="flex items-center gap-3">
-                  <input 
-                    type="checkbox" 
-                    checked={preferences.remote}
-                    onChange={(e) => setPreferences(prev => ({ ...prev, remote: e.target.checked }))}
-                  />
-                  <span className="text-sm">Open to remote candidates</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input 
-                    type="checkbox" 
-                    checked={preferences.projectBased}
-                    onChange={(e) => setPreferences(prev => ({ ...prev, projectBased: e.target.checked }))}
-                  />
-                  <span className="text-sm">Use project-based evaluation</span>
-                </label>
-                
-                <label className="flex items-center gap-3">
-                  <input 
-                    type="checkbox" 
-                    checked={preferences.fullTime}
-                    onChange={(e) => setPreferences(prev => ({ ...prev, fullTime: e.target.checked }))}
-                  />
-                  <span className="text-sm">Only full-time positions</span>
-                </label>
-              </div>
-            </div>
-          )}
         </SectionCard>
 
         <div className="flex items-center justify-between">

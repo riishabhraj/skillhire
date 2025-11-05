@@ -30,6 +30,26 @@ export interface IUser extends Document {
       location: string
       timezone: string
       languages: string[]
+      
+      // Projects portfolio (automatically populated from job applications)
+      projects?: Array<{
+        id: string
+        title: string
+        description: string
+        technologies: string[]
+        githubUrl?: string
+        liveUrl?: string
+        screenshots?: string[]
+        role: string
+        duration: string
+        teamSize: number
+        challenges: string[]
+        achievements: string[]
+        complexity: 'simple' | 'medium' | 'complex' | 'enterprise'
+        scale: 'small' | 'medium' | 'large'
+        features: string[]
+        addedAt: Date // When project was first added
+      }>
     }
     
     // Employer specific fields
@@ -50,6 +70,14 @@ export interface IUser extends Document {
       timezone: string
       preferredWorkArrangement: 'remote' | 'hybrid' | 'onsite'
       companyLogo?: string
+      subscription?: {
+        type: 'basic' | 'premium'
+        status: 'active' | 'inactive' | 'cancelled'
+        stripeSessionId?: string
+        stripeCustomerId?: string
+        activatedAt?: Date
+        expiresAt?: Date
+      }
     }
   }
   createdAt: Date
@@ -112,7 +140,36 @@ const UserSchema = new Schema<IUser>({
       },
       location: String,
       timezone: String,
-      languages: [String]
+      languages: [String],
+      
+      // Projects portfolio
+      projects: [{
+        id: String,
+        title: String,
+        description: String,
+        technologies: [String],
+        githubUrl: String,
+        liveUrl: String,
+        screenshots: [String],
+        role: String,
+        duration: String,
+        teamSize: Number,
+        challenges: [String],
+        achievements: [String],
+        complexity: {
+          type: String,
+          enum: ['simple', 'medium', 'complex', 'enterprise']
+        },
+        scale: {
+          type: String,
+          enum: ['small', 'medium', 'large']
+        },
+        features: [String],
+        addedAt: {
+          type: Date,
+          default: Date.now
+        }
+      }]
     },
     
     employerProfile: {
@@ -140,7 +197,21 @@ const UserSchema = new Schema<IUser>({
         type: String,
         enum: ['remote', 'hybrid', 'onsite']
       },
-      companyLogo: String
+      companyLogo: String,
+      subscription: {
+        type: {
+          type: String,
+          enum: ['basic', 'premium']
+        },
+        status: {
+          type: String,
+          enum: ['active', 'inactive', 'cancelled']
+        },
+        stripeSessionId: String,
+        stripeCustomerId: String,
+        activatedAt: Date,
+        expiresAt: Date
+      }
     }
   }
 }, {

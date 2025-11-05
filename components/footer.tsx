@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <div className="mb-4">
-              <h3 className="text-xl font-semibold text-foreground">SkillHire</h3>
+              <h3 className="text-xl font-semibold text-foreground">ProjectHire</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 Revolutionizing hiring through project-based evaluation. 
                 Find better candidates faster with hands-on assessments that mirror real work.
@@ -40,7 +40,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 border-t border-border pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 SkillHire. All rights reserved.</p>
+          <p>&copy; 2024 ProjectHire. All rights reserved.</p>
         </div>
       </div>
     </footer>

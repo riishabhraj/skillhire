@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs'
 export function useRoleDetection() {
   const { isLoaded, isSignedIn, user } = useUser()
   const [role, setRole] = useState<'employer' | 'candidate' | null>(null)
+  const [onboardingCompleted, setOnboardingCompleted] = useState<boolean>(false)
   const [isDetecting, setIsDetecting] = useState(true)
 
   useEffect(() => {
@@ -24,9 +25,11 @@ export function useRoleDetection() {
         if (response.ok) {
           const userData = await response.json()
           setRole(userData.role)
+          setOnboardingCompleted(userData.onboardingCompleted || false)
         } else {
           // If user not found in database, redirect to onboarding
           setRole(null)
+          setOnboardingCompleted(false)
         }
       } catch (error) {
         console.error('Error fetching user role:', error)
@@ -50,6 +53,7 @@ export function useRoleDetection() {
 
   return {
     role,
+    onboardingCompleted,
     isDetecting,
     setUserRole,
     clearRole,

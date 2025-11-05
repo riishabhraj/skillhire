@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Plus, X, Briefcase, MapPin, DollarSign, Clock, Target, CreditCard } from "lucide-react"
-import PaymentButton from "@/components/payment-button"
+import { PaymentButton } from "@/components/payment-button"
 
 export default function PostJobPage() {
   const [step, setStep] = useState(0)
@@ -99,7 +99,7 @@ export default function PostJobPage() {
   const steps = [
     { id: 0, title: "Job Details", icon: Briefcase },
     { id: 1, title: "Requirements", icon: Target },
-    { id: 2, title: "Project Criteria", icon: Target },
+    { id: 2, title: "How To Apply", icon: Target },
     { id: 3, title: "Review", icon: Clock },
     { id: 4, title: "Payment", icon: CreditCard }
   ]
@@ -313,14 +313,6 @@ export default function PostJobPage() {
     }
   }
 
-  const handlePaymentSuccess = () => {
-    router.push('/employer/dashboard?payment=success')
-  }
-
-  const handlePaymentError = (error: string) => {
-    setError(error)
-  }
-
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -514,29 +506,6 @@ export default function PostJobPage() {
             <div className="space-y-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Requirements</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add a requirement..."
-                      value={newRequirement}
-                      onChange={(e) => setNewRequirement(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addItem('requirements', newRequirement)}
-                    />
-                    <Button onClick={() => addItem('requirements', newRequirement)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {jobData.requirements.map((req, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {req}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('requirements', index)} />
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
                   <Label>Required Skills</Label>
                   <div className="flex gap-2">
                     <Input
@@ -551,9 +520,19 @@ export default function PostJobPage() {
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {jobData.requiredSkills.map((skill, index) => (
-                      <Badge key={index} variant="destructive" className="flex items-center gap-1">
+                      <Badge key={index} variant="outline" className="flex items-center gap-1">
                         {skill}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('requiredSkills', index)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeItem('requiredSkills', index)
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
@@ -576,7 +555,17 @@ export default function PostJobPage() {
                     {jobData.preferredSkills.map((skill, index) => (
                       <Badge key={index} variant="outline" className="flex items-center gap-1">
                         {skill}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeItem('preferredSkills', index)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeItem('preferredSkills', index)
+                          }}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
@@ -662,7 +651,7 @@ export default function PostJobPage() {
           {step === 2 && (
             <div className="space-y-6">
               <div>
-                <h4 className="text-sm font-medium mb-2">Application Method</h4>
+                <h4 className="text-sm font-medium mb-2">How To Apply</h4>
                 <p className="text-sm text-muted-foreground mb-4">
                   Choose how candidates will apply for this job.
                 </p>
@@ -716,124 +705,6 @@ export default function PostJobPage() {
                   </div>
                 )}
               </div>
-
-              {!jobData.useCareerSite && (
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Project Evaluation Criteria</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Define what types of projects and skills you want to evaluate in candidates.
-                  </p>
-                </div>
-              )}
-
-              {!jobData.useCareerSite && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Required Project Types</Label>
-                    <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g., web-app, mobile-app, api..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addItem('projectEvaluationCriteria.requiredProjectTypes', newTag)}
-                    />
-                    <Button onClick={() => addItem('projectEvaluationCriteria.requiredProjectTypes', newTag)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                    {jobData.projectEvaluationCriteria.requiredProjectTypes.map((type, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {type}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => {
-                          setJobData(prev => ({
-                            ...prev,
-                            projectEvaluationCriteria: {
-                              ...prev.projectEvaluationCriteria,
-                              requiredProjectTypes: prev.projectEvaluationCriteria.requiredProjectTypes.filter((_, i) => i !== index)
-                            }
-                          }))
-                        }} />
-                      </Badge>
-                    ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Required Technologies for Projects</Label>
-                    <div className="flex gap-2">
-                    <Input
-                      placeholder="e.g., React, Node.js, Python..."
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && addItem('projectEvaluationCriteria.requiredTechnologies', newTag)}
-                    />
-                    <Button onClick={() => addItem('projectEvaluationCriteria.requiredTechnologies', newTag)}>
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                    {jobData.projectEvaluationCriteria.requiredTechnologies.map((tech, index) => (
-                      <Badge key={index} variant="destructive" className="flex items-center gap-1">
-                        {tech}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => {
-                          setJobData(prev => ({
-                            ...prev,
-                            projectEvaluationCriteria: {
-                              ...prev.projectEvaluationCriteria,
-                              requiredTechnologies: prev.projectEvaluationCriteria.requiredTechnologies.filter((_, i) => i !== index)
-                            }
-                          }))
-                        }} />
-                      </Badge>
-                    ))}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Minimum Project Complexity</Label>
-                      <Select 
-                        value={jobData.projectEvaluationCriteria.minimumProjectComplexity} 
-                        onValueChange={(value: any) => setJobData(prev => ({ 
-                          ...prev, 
-                          projectEvaluationCriteria: { ...prev.projectEvaluationCriteria, minimumProjectComplexity: value }
-                        }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="complex">Complex</SelectItem>
-                          <SelectItem value="enterprise">Enterprise</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Project Scale</Label>
-                      <Select 
-                        value={jobData.projectEvaluationCriteria.projectScale} 
-                        onValueChange={(value: any) => setJobData(prev => ({ 
-                          ...prev, 
-                          projectEvaluationCriteria: { ...prev.projectEvaluationCriteria, projectScale: value }
-                        }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Small</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="large">Large</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -888,19 +759,10 @@ export default function PostJobPage() {
                 </div>
 
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Requirements</h4>
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {jobData.requirements.map((req, index) => (
-                      <li key={index}>• {req}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="p-4 border rounded-lg">
                   <h4 className="font-medium mb-2">Required Skills</h4>
                   <div className="flex flex-wrap gap-2">
                     {jobData.requiredSkills.map((skill, index) => (
-                      <Badge key={index} variant="destructive">{skill}</Badge>
+                      <Badge key={index} variant="outline">{skill}</Badge>
                     ))}
                   </div>
                 </div>
@@ -915,7 +777,7 @@ export default function PostJobPage() {
                 </div>
 
                 <div className="p-4 border rounded-lg">
-                  <h4 className="font-medium mb-2">Application Method</h4>
+                  <h4 className="font-medium mb-2">How To Apply</h4>
                   <div className="space-y-2 text-sm">
                     {jobData.useCareerSite ? (
                       <div>
@@ -925,10 +787,7 @@ export default function PostJobPage() {
                     ) : (
                       <div>
                         <p><strong>Method:</strong> Apply on our platform</p>
-                        <p><strong>Project Types:</strong> {jobData.projectEvaluationCriteria.requiredProjectTypes.join(', ') || 'Any'}</p>
-                        <p><strong>Technologies:</strong> {jobData.projectEvaluationCriteria.requiredTechnologies.join(', ') || 'Any'}</p>
-                        <p><strong>Complexity:</strong> {jobData.projectEvaluationCriteria.minimumProjectComplexity}</p>
-                        <p><strong>Scale:</strong> {jobData.projectEvaluationCriteria.projectScale}</p>
+                        <p>Candidates will apply directly on our platform with project portfolios and get evaluated automatically.</p>
                       </div>
                     )}
                   </div>
@@ -1073,8 +932,6 @@ export default function PostJobPage() {
                   <PaymentButton
                     planType={selectedPlan}
                     jobId={createdJobId}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
                   />
                 </div>
               )}

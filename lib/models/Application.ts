@@ -68,6 +68,27 @@ export interface IApplication extends Document {
       skillsFeedback: string
       recommendations: string[]
     }
+    
+    // NEW: Advanced AI evaluation with RAG
+    advancedEvaluation?: {
+      semanticScore: number // 0-100 (semantic match via embeddings)
+      technicalDepthScore: number // 0-100 (code quality analysis)
+      innovationScore: number // 0-100 (novel approaches)
+      aiRanking: 'top-tier' | 'strong' | 'good' | 'average' | 'below-average'
+      aiAnalysis: string // Detailed AI feedback
+      aiConfidence: number // 0-100
+      overallRecommendation: 'strongly-recommend' | 'recommend' | 'consider' | 'not-recommended'
+      strengths: string[]
+      weaknesses: string[]
+      keyTakeaways: string[]
+      projectInsights: Array<{
+        projectId: string
+        projectTitle: string
+        relevanceScore: number
+        technicalScore: number
+        highlights: string[]
+      }>
+    }
   }
   
   // Greenhouse integration
@@ -196,6 +217,33 @@ const ApplicationSchema = new Schema<IApplication>({
       experienceFeedback: String,
       skillsFeedback: String,
       recommendations: [String]
+    },
+    
+    // NEW: Advanced AI evaluation
+    advancedEvaluation: {
+      semanticScore: Number,
+      technicalDepthScore: Number,
+      innovationScore: Number,
+      aiRanking: {
+        type: String,
+        enum: ['top-tier', 'strong', 'good', 'average', 'below-average']
+      },
+      aiAnalysis: String,
+      aiConfidence: Number,
+      overallRecommendation: {
+        type: String,
+        enum: ['strongly-recommend', 'recommend', 'consider', 'not-recommended']
+      },
+      strengths: [String],
+      weaknesses: [String],
+      keyTakeaways: [String],
+      projectInsights: [{
+        projectId: String,
+        projectTitle: String,
+        relevanceScore: Number,
+        technicalScore: Number,
+        highlights: [String]
+      }]
     }
   },
   

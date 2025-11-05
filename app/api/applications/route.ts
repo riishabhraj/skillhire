@@ -7,8 +7,57 @@ import EvaluationSettings from '@/lib/models/EvaluationSettings'
 import { CandidateEvaluationService } from '@/lib/services/candidate-evaluation'
 import { HFEvaluatorService } from '@/lib/services/hf-evaluator'
 import { GitHubEnhancementService } from '@/lib/services/github-enhancement'
+import { AdvancedAIEvaluator } from '@/lib/services/advanced-ai-evaluator'
 import { isEvaluationVisible, getCandidateStatus, getCandidateEvaluation, getTimeUntilVisible } from '@/lib/utils/evaluation-visibility'
 import User from '@/lib/models/User'
+
+/**
+ * Sync projects from application to candidate's profile portfolio
+ * Prevents duplicates based on project ID or title+githubUrl
+ */
+async function syncProjectsToProfile(candidateId: string, projects: any[]) {
+  const user = await User.findOne({ clerkId: candidateId })
+  
+  if (!user || user.role !== 'candidate') {
+    console.warn('User not found or not a candidate, skipping project sync')
+    return
+  }
+
+  // Initialize projects array if it doesn't exist
+  if (!user.profile.candidateProfile) {
+    user.profile.candidateProfile = {}
+  }
+  
+  if (!user.profile.candidateProfile.projects) {
+    user.profile.candidateProfile.projects = []
+  }
+
+  const existingProjects = user.profile.candidateProfile.projects || []
+
+  // Add new projects (avoid duplicates)
+  for (const project of projects) {
+    // Check if project already exists (by ID or by title+githubUrl)
+    const isDuplicate = existingProjects.some((existingProj: any) => {
+      if (existingProj.id === project.id) return true
+      if (project.githubUrl && existingProj.githubUrl === project.githubUrl) return true
+      if (existingProj.title === project.title && !project.githubUrl && !existingProj.githubUrl) return true
+      return false
+    })
+
+    if (!isDuplicate) {
+      existingProjects.push({
+        ...project,
+        addedAt: new Date()
+      })
+      console.log(`📁 Added new project to profile: ${project.title}`)
+    } else {
+      console.log(`⏭️  Project already in profile: ${project.title}`)
+    }
+  }
+
+  user.profile.candidateProfile.projects = existingProjects
+  await user.save()
+}
 
 // POST /api/applications - Create new application
 export async function POST(request: NextRequest) {
@@ -89,6 +138,15 @@ export async function POST(request: NextRequest) {
     job.totalApplications = (job.totalApplications || 0) + 1
     job.applications.push(savedApplication._id)
     await job.save()
+
+    // NEW: Sync projects to candidate's profile portfolio
+    try {
+      await syncProjectsToProfile(candidateId || userId, projects)
+      console.log('✅ Projects synced to candidate profile')
+    } catch (syncError) {
+      console.error('Failed to sync projects to profile:', syncError)
+      // Don't fail the application if sync fails
+    }
 
     // Get evaluation settings for the job owner
     let settings = await EvaluationSettings.findOne({ companyId: job.companyId })
@@ -176,6 +234,58 @@ export async function POST(request: NextRequest) {
         } catch (hfError) {
           // Continue with rule-based evaluation if HF fails
           console.warn('Hugging Face evaluation failed, using rule-based only:', hfError)
+        }
+        
+        // NEW: Advanced AI Evaluation with RAG (Vector Embeddings + Deep Analysis)
+        try {
+          console.log('🚀 Starting Advanced AI Evaluation with RAG...')
+          const advancedEvaluator = new AdvancedAIEvaluator(
+            process.env.HF_TOKEN,
+            process.env.GITHUB_TOKEN
+          )
+          
+          if (advancedEvaluator.isConfigured()) {
+            const advancedResult = await advancedEvaluator.evaluateWithRAG({
+              job,
+              application: enhancedApplication as any,
+              enhancedProjects: (enhancedApplication as any).projects || []
+            })
+            
+            if (advancedResult) {
+              // Store advanced evaluation results
+              (evaluation as any).advancedEvaluation = {
+                semanticScore: advancedResult.semanticScore,
+                technicalDepthScore: advancedResult.technicalDepthScore,
+                innovationScore: advancedResult.innovationScore,
+                aiRanking: advancedResult.aiRanking,
+                aiAnalysis: advancedResult.aiAnalysis,
+                aiConfidence: advancedResult.aiConfidence,
+                overallRecommendation: advancedResult.overallRecommendation,
+                strengths: advancedResult.strengths,
+                weaknesses: advancedResult.weaknesses,
+                keyTakeaways: advancedResult.keyTakeaways,
+                projectInsights: advancedResult.projectInsights
+              }
+              
+              // Optionally boost shortlist status for top-tier candidates
+              if (advancedResult.aiRanking === 'top-tier' && advancedResult.overallRecommendation === 'strongly-recommend') {
+                evaluation.shortlistStatus = 'shortlisted'
+                console.log('✨ Top-tier candidate auto-shortlisted!')
+              }
+              
+              // Enhance feedback with AI analysis
+              if (advancedResult.aiAnalysis) {
+                evaluation.feedback = `${evaluation.feedback}\n\n🤖 Advanced AI Analysis:\n${advancedResult.aiAnalysis}`
+              }
+              
+              console.log(`✅ Advanced evaluation complete: ${advancedResult.aiRanking} (Confidence: ${advancedResult.aiConfidence}%)`)
+            }
+          } else {
+            console.log('⚠️ Advanced AI evaluation skipped: HF token not configured')
+          }
+        } catch (advancedError) {
+          console.error('Advanced AI evaluation failed:', advancedError)
+          // Continue without advanced evaluation
         }
       }
 

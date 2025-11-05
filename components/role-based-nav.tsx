@@ -6,22 +6,23 @@ import { useRoleDetection } from "@/hooks/use-role-detection"
 import { Loader2, Briefcase, User, Settings, BarChart3, FileText, Users, Plus } from "lucide-react"
 
 export default function RoleBasedNav() {
-  const { role, isDetecting, isSignedIn } = useRoleDetection()
+  const { role, onboardingCompleted, isDetecting, isSignedIn } = useRoleDetection()
 
   return (
-    <nav className="flex items-center gap-3">
+    <nav className="flex items-center gap-2 md:gap-3">
       <SignedOut>
         <Link
           href="/candidate"
-          className="inline-flex items-center justify-center rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground hover:bg-muted"
+          className="inline-flex items-center justify-center rounded-md border border-border bg-background px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm text-foreground hover:bg-muted"
         >
           Sign In
         </Link>
         <Link
           href="/employer"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:opacity-90"
+          className="inline-flex items-center justify-center rounded-md bg-primary px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm text-primary-foreground hover:opacity-90 whitespace-nowrap"
         >
-          For Recruiters
+          <span className="hidden sm:inline">For Recruiters</span>
+          <span className="sm:hidden">Recruiters</span>
         </Link>
       </SignedOut>
       
@@ -32,23 +33,25 @@ export default function RoleBasedNav() {
             <span className="text-sm text-muted-foreground">Loading...</span>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {/* Role-based navigation links */}
-             {role === 'candidate' && (
+             {role === 'candidate' && onboardingCompleted && (
                <Link
                  href="/candidate/dashboard"
-                 className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+                 className="inline-flex items-center gap-1 md:gap-2 rounded-md px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                >
-                 Dashboard
+                 <span className="hidden sm:inline">Dashboard</span>
+                 <span className="sm:hidden">Dash</span>
                </Link>
              )}
              
-             {role === 'employer' && (
+             {role === 'employer' && onboardingCompleted && (
                <Link
                  href="/employer/dashboard"
-                 className="inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
+                 className="inline-flex items-center gap-1 md:gap-2 rounded-md px-2 py-1.5 md:px-3 md:py-2 text-xs md:text-sm text-muted-foreground hover:text-foreground hover:bg-muted"
                >
-                 Dashboard
+                 <span className="hidden sm:inline">Dashboard</span>
+                 <span className="sm:hidden">Dash</span>
                </Link>
              )}
             

@@ -49,10 +49,12 @@ export interface IJob extends Document {
   useCareerSite: boolean // Whether to redirect to career site or use platform
   
   // Payment fields
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded'
+  paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded'
   planType: 'basic' | 'premium'
-  lemonSqueezyOrderId?: string
+  stripeSessionId?: string
+  stripePaymentIntentId?: string
   paidAt?: Date
+  activatedAt?: Date
   
   status: 'active' | 'paused' | 'closed'
   postedAt: Date
@@ -173,7 +175,7 @@ const JobSchema = new Schema<IJob>({
   // Payment fields
   paymentStatus: {
     type: String,
-    enum: ['pending', 'paid', 'failed', 'refunded'],
+    enum: ['pending', 'completed', 'failed', 'refunded'],
     default: 'pending'
   },
   planType: {
@@ -181,8 +183,10 @@ const JobSchema = new Schema<IJob>({
     enum: ['basic', 'premium'],
     required: true
   },
-  lemonSqueezyOrderId: String,
+  stripeSessionId: String,
+  stripePaymentIntentId: String,
   paidAt: Date,
+  activatedAt: Date,
   
   status: {
     type: String,

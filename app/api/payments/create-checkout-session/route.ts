@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { createCheckout } from '@lemonsqueezy/lemonsqueezy.js'
-import { LEMONSQUEEZY_STORE_ID, PRODUCT_VARIANTS } from '@/lib/lemonsqueezy'
+import { stripe, STRIPE_CONFIG } from '@/lib/stripe'
 import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
+import Payment from '@/lib/models/Payment'
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,12 +30,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    // Get the variant ID for the selected plan
-    const variantId = planType === 'basic' ? PRODUCT_VARIANTS.basic : PRODUCT_VARIANTS.premium
+    // Get the product ID and price for the selected plan
+    const productId = planType === 'basic' ? STRIPE_CONFIG.products.basic : STRIPE_CONFIG.products.premium
+    const price = planType === 'basic' ? STRIPE_CONFIG.prices.basic : STRIPE_CONFIG.prices.premium
 
-    if (!variantId) {
+    if (!productId) {
       return NextResponse.json(
-        { error: 'Product variant not configured. Please contact support.' },
+        { error: 'Product not configured. Please contact support.' },
         { status: 500 }
       )
     }
@@ -45,48 +46,55 @@ export async function POST(request: NextRequest) {
     const lastName = user.profile?.lastName || ''
     const customerName = `${firstName} ${lastName}`.trim() || user.profile?.employerProfile?.companyName || user.email.split('@')[0]
 
-    console.log('Creating checkout for:', { email: user.email, name: customerName, variantId })
+    console.log('Creating Stripe checkout for:', { email: user.email, name: customerName, productId, price })
 
-    // Create Lemon Squeezy checkout session
-    const checkout = await createCheckout(LEMONSQUEEZY_STORE_ID, variantId, {
-      checkoutData: {
-        email: user.email,
-        name: customerName,
-        custom: {
-          jobId,
-          userId,
-          planType
-        }
-      },
-      checkoutOptions: {
-        embed: false,
-        media: false,
-        logo: true,
-        desc: true,
-        discount: true,
-        dark: false,
-        subscriptionPreview: false,
-        buttonColor: '#6366f1'
-      },
-      expiresAt: null,
-      preview: false,
-      testMode: process.env.NODE_ENV === 'development',
-      redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/employer/dashboard`
+    // Create Stripe checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'inr',
+            product: productId,
+            unit_amount: price,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/employer/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/employer/post-job?payment=cancelled`,
+      customer_email: user.email,
+      metadata: {
+        userId,
+        jobId,
+        planType,
+        customerName
+      }
     })
 
-    if (checkout.error) {
-      console.error('Lemon Squeezy checkout error:', JSON.stringify(checkout.error, null, 2))
-      return NextResponse.json(
-        { error: 'Failed to create checkout session', details: checkout.error },
-        { status: 500 }
-      )
-    }
+    // Create payment record
+    const payment = new Payment({
+      userId,
+      jobId,
+      planType,
+      amount: price / 100, // Convert cents to dollars
+      currency: 'USD',
+      status: 'pending',
+      paymentMethod: 'stripe',
+      stripeSessionId: session.id
+    })
 
-    console.log('✅ Checkout created successfully:', checkout.data?.data.attributes.url)
-    return NextResponse.json({ checkoutUrl: checkout.data?.data.attributes.url })
+    await payment.save()
+
+    console.log('✅ Stripe checkout created successfully:', session.url)
+    return NextResponse.json({ 
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      paymentId: payment._id
+    })
   } catch (error: any) {
-    console.error('Error creating checkout session:', error)
-    console.error('Error details:', error.cause || error.message)
+    console.error('Error creating Stripe checkout session:', error)
     return NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }

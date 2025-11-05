@@ -93,6 +93,7 @@ export async function GET(
       clerkId: user.clerkId,
       email: user.email,
       role: user.role,
+      onboardingCompleted: user.onboardingCompleted,
       firstName: user.profile?.firstName || user.firstName,
       lastName: user.profile?.lastName || user.lastName
     })

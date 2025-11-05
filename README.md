@@ -1,4 +1,4 @@
-# SkillHire - AI-Powered Job Matching Platform
+# ProjectHire - AI-Powered Job Matching Platform
 
 A modern, full-stack job matching platform that connects employers with skilled candidates through AI-powered evaluation and GitHub integration.
 
@@ -47,8 +47,8 @@ A modern, full-stack job matching platform that connects employers with skilled 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/skillhire.git
-cd skillhire
+git clone https://github.com/yourusername/projecthire.git
+cd projecthire
 ```
 
 ### 2. Install Dependencies
@@ -152,7 +152,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## 📁 Project Structure
 
 ```
-skillhire/
+projecthire/
 ├── app/                    # Next.js app directory
 │   ├── (auth)/            # Authentication pages
 │   ├── api/               # API routes
@@ -243,7 +243,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/yourusername/skillhire/issues) page
+1. Check the [Issues](https://github.com/yourusername/projecthire/issues) page
 2. Create a new issue with detailed information
 3. Contact the development team
 
@@ -258,4 +258,4 @@ If you encounter any issues or have questions:
 
 ---
 
-Built with ❤️ by the SkillHire team
+Built with ❤️ by the ProjectHire team
