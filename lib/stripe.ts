@@ -1,16 +1,44 @@
 import Stripe from 'stripe'
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-09-30.clover',
+let stripeInstance: Stripe | null = null
+
+export const getStripe = () => {
+  if (!stripeInstance) {
+    const apiKey = process.env.STRIPE_SECRET_KEY
+    if (!apiKey) {
+      throw new Error('STRIPE_SECRET_KEY is not configured')
+    }
+    stripeInstance = new Stripe(apiKey, {
+      apiVersion: '2025-09-30.clover',
+    })
+  }
+  return stripeInstance
+}
+
+// For backward compatibility, create a getter
+export const stripe = new Proxy({} as Stripe, {
+  get(target, prop) {
+    return getStripe()[prop as keyof Stripe]
+  }
 })
 
 export const STRIPE_CONFIG = {
-  publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
-  secretKey: process.env.STRIPE_SECRET_KEY || '',
-  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+  get publishableKey() {
+    return process.env.STRIPE_PUBLISHABLE_KEY || ''
+  },
+  get secretKey() {
+    return process.env.STRIPE_SECRET_KEY || ''
+  },
+  get webhookSecret() {
+    return process.env.STRIPE_WEBHOOK_SECRET || ''
+  },
   products: {
-    basic: process.env.STRIPE_BASIC_PRODUCT_ID || '',
-    premium: process.env.STRIPE_PREMIUM_PRODUCT_ID || '',
+    get basic() {
+      return process.env.STRIPE_BASIC_PRODUCT_ID || ''
+    },
+    get premium() {
+      return process.env.STRIPE_PREMIUM_PRODUCT_ID || ''
+    },
   },
   prices: {
     basic: 9900, // $99.00 in cents
