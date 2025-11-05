@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stripe, STRIPE_CONFIG } from '@/lib/stripe'
-import { connectDB } from '@/lib/mongodb'
+import connectDB from '@/lib/mongodb'
 import User from '@/lib/models/User'
 import Payment from '@/lib/models/Payment'
 import Job from '@/lib/models/Job'
