@@ -1,19 +1,38 @@
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-})
+let s3ClientInstance: S3Client | null = null;
+
+function getS3Client(): S3Client {
+  if (!s3ClientInstance) {
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+    
+    if (!accessKeyId || !secretAccessKey) {
+      throw new Error('AWS credentials not configured. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables.');
+    }
+    
+    s3ClientInstance = new S3Client({
+      region: process.env.AWS_REGION || 'us-east-1',
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    });
+  }
+  return s3ClientInstance;
+}
 
 export async function uploadToS3(
   file: Buffer,
   fileName: string,
   contentType: string
 ): Promise<string> {
-  const bucketName = process.env.AWS_S3_BUCKET_NAME!
+  const bucketName = process.env.AWS_S3_BUCKET_NAME
+  
+  if (!bucketName) {
+    throw new Error('AWS_S3_BUCKET_NAME not configured')
+  }
+  
   const key = `company-logos/${Date.now()}-${fileName}`
 
   const command = new PutObjectCommand({
@@ -25,6 +44,7 @@ export async function uploadToS3(
   })
 
   try {
+    const s3Client = getS3Client()
     await s3Client.send(command)
     return `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
   } catch (error) {
@@ -52,7 +72,12 @@ export async function uploadFileToS3(
   fileName: string,
   contentType: string
 ): Promise<string> {
-  const bucketName = process.env.AWS_S3_RESUME_BUCKET_NAME!
+  const bucketName = process.env.AWS_S3_RESUME_BUCKET_NAME || process.env.AWS_S3_BUCKET_NAME
+  
+  if (!bucketName) {
+    throw new Error('AWS_S3_RESUME_BUCKET_NAME or AWS_S3_BUCKET_NAME not configured')
+  }
+  
   const key = `resumes/${fileName}`
 
   // Remove data URL prefix if present
@@ -68,6 +93,7 @@ export async function uploadFileToS3(
   })
 
   try {
+    const s3Client = getS3Client()
     await s3Client.send(command)
     return `https://${bucketName}.s3.${process.env.AWS_REGION || 'us-east-1'}.amazonaws.com/${key}`
   } catch (error) {
